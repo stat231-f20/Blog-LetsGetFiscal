@@ -7,6 +7,7 @@ library(robotstxt)
 library(rvest)
 library(knitr)
 library(janitor)
+library(rtweet)
 
 library(plotly)
 library(dplyr)
@@ -18,29 +19,31 @@ knitr::opts_chunk$set(
 ```
 
 
-#Wiki Scrape
+#Finding Restaurants 
 
 ```{r}
 
-#Checking permission/access
-library(robotstxt)
-paths_allowed("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
+#Downloading data sets
+restaurants <- read_csv("FastFoodRestaurants.csv")
+city_income <- read_csv("kaggle_income.csv")
+city_pop <- read_csv("uscitypopdensity.csv")
 
-library(rvest)
-library(methods)
+#Finding top 5 restaurants based on amount
 
-#Scraping information
-url <- "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-tables <- url %>%
-  read_html() %>%
-  html_nodes("table")
-stock_info <- html_table(tables[[1]], fill=TRUE) 
+top_5 <- restaurants %>%
+  group_by(name) %>%
+  summarize(
+    Count = n()
+  ) %>%
+  arrange(desc(Count)) %>%
+  head(5)
 
-clean_wiki <- stock_info %>%
-  select(Symbol, Security, `GICS Sector`, `GICS Sub Industry`)
+#Top 5 are: McDonald's, Burger King, Taco Bell, Wendy's, and Arby's
+names = unique(top_5$name)
 
-head(clean_wiki)
-
+fast_food <- restaurants %>%
+  filter(name==unique(top_5$name)) %>%
+  rename(Restaurant=name) 
 
 ```
 

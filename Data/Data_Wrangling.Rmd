@@ -8,6 +8,7 @@ library(rvest)
 library(knitr)
 library(janitor)
 library(rtweet)
+library(tidytext)
 
 library(plotly)
 library(dplyr)
@@ -43,129 +44,33 @@ names = unique(top_5$name)
 
 fast_food <- restaurants %>%
   filter(name==unique(top_5$name)) %>%
-  rename(Restaurant=name) 
+  rename(Restaurant=name)
 
 ```
 
 
-#Creating base dataset
+#Collecting tweets
 
 ```{r}
 
-library(tidyverse)
-library(rvest)
-library(RSelenium)
-library(tidyquant)
-library(quantmod)
-
-#Initializaing for datasets 
-wiki <- clean_wiki
-all_stocks <- data.frame()
+path_in <- "Users/mattadams/Desktop/Sophomore Year 1st Semester/Data Science/Blog-LetsGetFiscal/Data"
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 
 
-#Initializaing for links used in web scraping
-link_prices_1 <- "https://finance.yahoo.com/quote/"
-link_prices_2 <- "/history?p="
-  
-link_shares_1 <- "https://finance.yahoo.com/quote/"
-link_shares_2 <- "/key-statistics?p="
-
-#Function checks if string is empty and returns false if empty
-is.valid <- function(x) {
-  require(shiny)
-  is.null(need(x, message = FALSE))  
-}
+key <- readLines("api_key_twitter.txt")
+secret_key <- readLines("api_secret_key.txt")
+bearer_token <- readLines("api_bearer_token.txt")
+access_token <- readLines("access_token.txt")
+secret_access_token <- readLines("secret_access_token.txt")
 
 
+mcds <- search_tweets(q="#mcdonald",
+                      n = 200) %>%
+  filter(lang=="en")
 
-symbol <- "MMM"
+head(users)
+users$location
 
-      #Scraping amount of outstanding shares for each company 
-      yahoo_url_shares <- paste0(link_shares_1,symbol,
-                                 link_shares_2,symbol)
-
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[3] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      #Selecting only outstanding shares
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      
-      #Acounting for the problem if table is not...
-      #...in the third position:
-      if(is.valid(shares)==FALSE){
-    
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[2] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      if(is.valid(shares)==FALSE){
-      
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[1] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      if(is.valid(shares)==FALSE){
-      
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[4] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      shares <- shares
-      
-      #Downloading historical data for each company
-      stock_data <- tq_get(symbol,
-               from = "2020-02-03",
-               to = "2020-10-02",
-               get = "stock.prices")
-
-      stock_data_2 <- data.frame(stock_data)
-      
-      #Adding column that shows amount of outstanding shares 
-      #...for each company
-      all_stocks <- stock_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      mutate(`Outstanding Shares`=shares)
-      
-  
-      all_stocks
 
 ```
 

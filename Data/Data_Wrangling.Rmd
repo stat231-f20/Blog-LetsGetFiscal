@@ -88,7 +88,7 @@ burgerking <- search_users(q="#burgerking",
                       n = 50) %>%
   filter(lang=="en")
 
-tweets <- search_tweets("mcdonalds", n = 1000, lang = "en") %>%
+tweets <- search_tweets("mcdonalds", n = 100, lang = "en") %>%
   select(status_id, text, location) %>%
   filter(!is.na(location))
 
@@ -154,8 +154,10 @@ ggplot(city_pop_map, aes(x = long, y = lat, group = group
   theme_void() +
   coord_fixed(ratio = 1.3) +
   labs(fill = "Proportion of colleges planning for in-person") +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom") +
+  scale_fill_distiller(palette = "BuPu", direction = "horizantle")
 
+#Change colors
 
 ```
 
@@ -238,8 +240,8 @@ ggplot(restaurant_density_map, aes(x = long, y = lat, group = group
   theme_void() +
   coord_fixed(ratio = 1.3) +
   labs(fill = "Proportion of colleges planning for in-person") +
-  theme(legend.position="bottom")
-
+  theme(legend.position="bottom") 
+  
 
 
 ```

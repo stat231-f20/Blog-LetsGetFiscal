@@ -13,6 +13,12 @@ library(tidytext)
 library(plotly)
 library(dplyr)
 
+library(leaflet)
+library(gganimate)
+library(lubridate)
+library(maps)
+library(ggthemes)
+
 knitr::opts_chunk$set(
   tidy=FALSE,     # display code as typed
   size="small")   # slightly smaller font for code
@@ -53,6 +59,24 @@ fast_food <- restaurants %>%
 
 ```{r}
 
+
+
+tweets <- search_tweets('Trump', lang="en",
+              geocode='38.9,-77,50mi')
+
+# If you want, convert tweets to a data frame #
+tweets.df <- twListToDF(tweets)
+
+# Look up the users #
+users <- lookupUsers(tweets.df$screenName)
+
+# Convert users to a dataframe, look at their location#
+users_df <- twListToDF(users)
+
+table(users_df[1:10, 'location'])
+
+
+
 path_in <- "Users/mattadams/Desktop/Sophomore Year 1st Semester/Data Science/Blog-LetsGetFiscal/Data"
 setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
 
@@ -64,12 +88,39 @@ access_token <- readLines("access_token.txt")
 secret_access_token <- readLines("secret_access_token.txt")
 
 
-mcds <- search_tweets(q="#mcdonald",
-                      n = 200) %>%
+data(stop_words)
+nrc_lexicon <- get_sentiments("nrc")
+
+mcds <- search_users(q="#mcdonald",
+                      n = 50) %>%
   filter(lang=="en")
 
-head(users)
-users$location
+wendys <- search_users(q="#wendys",
+                      n = 50) %>%
+  filter(lang=="en")
+
+burgerking <- search_users(q="#burgerking",
+                      n = 50) %>%
+  filter(lang=="en")
+
+tweets <- search_tweets("mcdonalds", n = 1000, lang = "en") %>%
+  select(text, location) %>%
+  filter(!is.na(location))
+
+tweet_locations <- tweets %>%
+  separate(location, into = c("City", "State")
+           , sep = ","
+           , remove = FALSE) %>%
+  select(text, State) 
+
+#NEED:
+  #Can we shade in densities by state?
+  #Can we get a sentiment analysis of a group of text that is still attached to its location?
+
+
+
+
+
 
 
 ```

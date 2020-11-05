@@ -52,29 +52,13 @@ fast_food <- restaurants %>%
   filter(name==unique(top_5$name)) %>%
   rename(Restaurant=name)
 
+
 ```
 
 
 #Collecting tweets
 
 ```{r}
-
-
-
-tweets <- search_tweets('Trump', lang="en",
-              geocode='38.9,-77,50mi')
-
-# If you want, convert tweets to a data frame #
-tweets.df <- twListToDF(tweets)
-
-# Look up the users #
-users <- lookupUsers(tweets.df$screenName)
-
-# Convert users to a dataframe, look at their location#
-users_df <- twListToDF(users)
-
-table(users_df[1:10, 'location'])
-
 
 
 path_in <- "Users/mattadams/Desktop/Sophomore Year 1st Semester/Data Science/Blog-LetsGetFiscal/Data"
@@ -89,6 +73,7 @@ secret_access_token <- readLines("secret_access_token.txt")
 
 
 data(stop_words)
+
 nrc_lexicon <- get_sentiments("nrc")
 
 mcds <- search_users(q="#mcdonald",
@@ -104,335 +89,156 @@ burgerking <- search_users(q="#burgerking",
   filter(lang=="en")
 
 tweets <- search_tweets("mcdonalds", n = 1000, lang = "en") %>%
-  select(text, location) %>%
+  select(status_id, text, location) %>%
   filter(!is.na(location))
 
 tweet_locations <- tweets %>%
   separate(location, into = c("City", "State")
            , sep = ","
            , remove = FALSE) %>%
-  select(text, State) 
+  select(status_id, text, State) %>%
+  na.omit
+  
 
 #NEED:
-  #Can we shade in densities by state?
+  #Can we shade in densities by state with a general lat and long?
+    #Sem-join 
   #Can we get a sentiment analysis of a group of text that is still attached to its location?
 
+https <- rbind(stop_words, c("https", "SMART"))
+t.co <- rbind(https, c("t.co", "SMART"))
+stop_words_2 <- t.co
 
+#Before I create the one word per row dataset, group_by location and id, then it will keep tweet ID variable in
+tweet_words <- tweet_locations %>%
+  group_by(status_id, State) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words_2, by="word")
 
+positive <- nrc_lexicon %>%
+  filter(sentiment=="positive")
 
+negative <- nrc_lexicon %>%
+  filter(sentiment=="negative")
 
+tweet_positive <- tweet_words %>%
+  semi_join(positive, by="word")
 
 
 ```
 
 
-
-#Yahoo Scrape
+#City Population Density Map
 
 
 ```{r}
 
+#City Population
+city_pop_1 <- city_pop %>%
+  rename(pop_dens = `Population Density (Persons/Square Mile)`)
 
-library(tidyverse)
-library(rvest)
-library(RSelenium)
-library(tidyquant)
-library(quantmod)
+usa_states <- map_data(map = "state"
+                       , region = ".")
 
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.name
+                         , Region = state.region)
 
-#Initializaing for datasets 
-wiki <- clean_wiki
+city_pop_map <- city_pop_1 %>%
+  left_join(state_info, by = "State") %>%
+  right_join(usa_states, by = c("state_full" = "region"))
 
-#Initializaing for links used in web scraping
-link_prices_1 <- "https://finance.yahoo.com/quote/"
-link_prices_2 <- "/history?p="
-  
-link_shares_1 <- "https://finance.yahoo.com/quote/"
-link_shares_2 <- "/key-statistics?p="
+ggplot(city_pop_map, aes(x = long, y = lat, group = group
+                      , fill = pop_dens)) +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of colleges planning for in-person") +
+  theme(legend.position="bottom")
 
-
-#For loop for S&P 500
-
-for (i in 2:505){
-  
-  
-  symbol <- clean_wiki$Symbol[i]
-
-  tryCatch(
-    { 
-
-      #Scraping amount of outstanding shares for each company 
-      yahoo_url_shares <- paste0(link_shares_1,symbol,
-                                 link_shares_2,symbol)
-      paths_allowed(yahoo_url_shares)
-
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[3] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      #Selecting only outstanding shares
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      
-      #Acounting for the problem if table is not...
-      #...in the third position:
-      if(is.valid(shares)==FALSE){
-      
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[2] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      if(is.valid(shares)==FALSE){
-      
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[1] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      if(is.valid(shares)==FALSE){
-      
-      shares_data <- (yahoo_url_shares %>%               
-      read_html() %>%
-      html_nodes("table") %>%   
-      html_table)[4] 
-      
-      shares_data_2 <- data.frame(shares_data)
-      
-      shares_data_3 <- shares_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      filter(X1=="Shares Outstanding 5")
-      
-      shares <- shares_data_3[1,2]
-      }
-      
-      shares <- shares
-      
-      #Downloading historical data for each company
-      stock_data <- tq_get(symbol,
-               from = "2020-02-03",
-               to = "2020-10-02",
-               get = "stock.prices")
-
-      stock_data_2 <- data.frame(stock_data)
-      
-      #Adding column that shows amount of outstanding shares 
-      #...for each company
-      stock_data_3 <- stock_data_2 %>%
-      mutate(Symbol=symbol) %>%
-      mutate(`Outstanding Shares`=shares)
-      
-      #Combining data on all companies into one dataset
-      all_stocks <- bind_rows(all_stocks, stock_data_3)
-
-     }
-    #if an error occurs, set to Missing and keep going 
-    , error=function(error_message) {
-      return("Missing")
-    }
-  ) 
-  
-}
-
-#Combining basic company information with historical data (Prices)
-final <- left_join(wiki, all_stocks, by="Symbol")
-
-#Taking out M and B so that values are integers, not string
-final_500 <- final %>%
-  mutate(`Outstanding Shares`= case_when(str_detect(`Outstanding Shares`, "M")~parse_number(`Outstanding Shares`)*1000000, str_detect(`Outstanding Shares`, "B")~parse_number(`Outstanding Shares`)*1000000, str_detect(`Outstanding Shares`, "K")~parse_number(`Outstanding Shares`)*1000))
-
-#ETFC, GD, BRK.B and BF.B do not have public outstanding shares...
-#...therefore they will not be included in this analysis
-
-save <- final_500
-
-no_outstanding <- save %>%
-  filter(is.na(`Outstanding Shares`)==TRUE)
-
-
-#Also could not retrieve data for LUMN therefore 
-#...the company will not be included in this analysis
-final_500 <- save %>%
-  filter(Symbol!="BRK.B") %>%
-  filter(Symbol!="BF.B") %>%
-  filter(Symbol!="GD") %>%
-  filter(Symbol!="ETFC") %>%
-  filter(Symbol!="LUMN")
-
-
-
-#Small Adjustment for Stock w/o data
-bad_comm <- final_500 %>%
-  filter(`GICS Sector`=="Communication Services") %>%
-  filter(is.na(close)) %>%
-  mutate(close=24.12)
-
-new_comm <- final_500 %>%
-  filter(!is.na(close)) 
-
-
-final_500 <- bind_rows(new_comm, bad_comm)
-
-write_csv(final_500, "final_500.csv")
 
 ```
 
 
-#Data Wrangling 
+#City Income 
 
 ```{r}
 
-#Examining industries and sectors
-summary(clean_wiki)
-sectors <- unique(clean_wiki$`GICS Sector`) 
-industries <- unique(clean_wiki$`GICS Sub Industry`) 
+city_income_1 <- city_income %>%
+  rename(State=State_Name) %>%
+  select(State, Median)
 
-industries_count <- clean_wiki %>%
-  group_by(`GICS Sub Industry`, `GICS Sector`) %>%
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.name
+                         , Region = state.region)
+
+city_income_1 <- city_income_1 %>%
+  left_join(state_info, by = "State") %>%
+  right_join(usa_states, by = c("state_full" = "region"))
+
+ggplot(city_income_1, aes(x = long, y = lat, group = group
+                      , fill = Median)) +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of colleges planning for in-person") +
+  theme(legend.position="bottom")
+
+
+```
+
+
+#Fast Food Chains Per Population (Creating a Fast Food Chain Density Metric)
+
+```{r}
+
+restaurants_us <- restaurants %>%
+  filter(country == "US")
+
+#Adding states to restaurants locations
+city <- data.frame(city = us.cities) 
+  
+us_cities <- city %>%
+  separate(city.name, into = c("city", "State")
+           , sep = " "
+           , remove = FALSE) 
+
+rest_city <- restaurants_us %>%
+  left_join(us_cities, by = "city") %>%
+  rename(lat=latitude, long=longitude)
+
+#Sum of Amount of Fast Food Chains in a city
+fast_food_density <- rest_city %>%
+  mutate(`Amount of Fast Food`=1) %>%
+  group_by(State) %>%
   summarize(
-    Count = n()
+    fast_density = sum(`Amount of Fast Food`)/sum(city.pop)
   ) %>%
-  arrange(desc(Count)) %>%
-  filter(Count>=6)
+  na.omit
 
-sectors_count <- clean_wiki %>%
-  group_by(`GICS Sector`) %>%
-  summarize(
-    Count = n()
-  ) %>%
-  arrange(desc(Count)) %>%
-  filter(Count>=6)
+usa_states <- map_data(map = "state"
+                       , region = ".")
 
-#Creating the datasets
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.abb
+                         , Region = state.region)
 
-#Creating indexes for sectors
-sectors <- final_500 %>%
-  mutate(`Market Cap`=close*`Outstanding Shares`) %>%
-  group_by(`GICS Sector`, date) %>%
-  summarize(
-   `Number of Companies`= n(), `Index Price`=sum(`Market Cap`)/sum(`Outstanding Shares`)
-  )
-
-write_csv(sectors, "sectors.csv")
-
-#Creating indexes for industries
-industries <- final_500 %>%
-  mutate(`Market Cap`=close*`Outstanding Shares`) %>%
-  group_by(`GICS Sub Industry`, date) %>%
-  summarize(
-   `Number of Companies`= n(), `Index Price`=sum(`Market Cap`)/sum(`Outstanding Shares`)
-  )
-
-write_csv(industries, "industries.csv")
-
-#Creating price change dataset for sectors 
-sector_dates <- sectors %>%
-  filter(date=="2020-02-03" | date=="2020-04-01" | date=="2020-10-01") 
-
-sectors_percentage <- sector_dates %>%
-  pivot_wider(id_cols = "GICS Sector", names_from ="date", values_from = c("Index Price")) %>%
-  mutate(`Two Month Change` = (`2020-04-01`-`2020-02-03`)/`2020-02-03`*100) %>%
-  mutate(`Six Month Change` = (`2020-10-01`-`2020-04-01`)/`2020-04-01`*100) %>%
-  mutate(`Overall` = (`2020-10-01`-`2020-02-03`)/`2020-02-03`*100)
-
-write_csv(sectors_percentage, "sectors_percentage.csv")
-
-#Creating price change dataset for industries 
-industries_dates <- industries %>%
-  filter(date=="2020-02-03" | date=="2020-04-01" | date=="2020-10-01") 
-
-industries_percentage <- industries_dates %>%
-  pivot_wider(id_cols = "GICS Sub Industry", names_from ="date", values_from = c("Index Price")) %>%
-  mutate(`Two Month Change` = (`2020-04-01`-`2020-02-03`)/`2020-02-03`*100) %>%
-  mutate(`Six Month Change` = (`2020-10-01`-`2020-04-01`)/`2020-04-01`*100) %>%
-  mutate(`Overall` = (`2020-10-01`-`2020-02-03`)/`2020-02-03`*100)
-
-write_csv(industries_percentage, "industries_percentage.csv")
-
-#Creating price change dataset for all companies 
-stock_percentage <- final_500 %>%
-  filter(date=="2020-02-03" | date =="2020-04-01" | date == "2020-10-01") %>%
-  pivot_wider(id_cols = c(Security, Symbol), names_from = "date", values_from = "close") %>%
-  mutate(`Two Month Change` = (`2020-04-01`-`2020-02-03`)/`2020-02-03`*100) %>%
-  mutate(`Six Month Change` = (`2020-10-01`-`2020-04-01`)/`2020-04-01`*100) %>%
-  mutate(`Overall` = (`2020-10-01`-`2020-02-03`)/`2020-02-03`*100)
-
-write_csv(stock_percentage, "stock_percentage.csv")
-
-industries_narrow <- industries %>%
-  group_by(`Security`,`GICS Sub Industry`) %>%
-  summarize(
-    Count = n()) %>%
-  filter(Count>5)
-
-industry_percentage <- industries_percentage %>%
-  mutate(`Two Month Change`=paste(round(`Two Month Change`,digits=2), "%",sep="")) %>%
-  mutate(`Six Month Change`=paste(round(`Six Month Change`,digits=2), "%",sep="")) %>%
-  mutate(`Overall Change`=paste(round(`Overall Change`,digits=2), "%",sep=""))
-
-```
+restaurant_density_map <- fast_food_density %>%
+  left_join(state_info, by = "State") %>%
+  right_join(usa_states, by = c("state_full" = "region"))
 
 
-#Practice Graphing
 
-```{r}
-
-#Checking permission/access
-library(robotstxt)
-paths_allowed("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
-
-library(rvest)
-library(methods)
-
-#Scraping information
-url <- "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-tables <- url %>%
-  read_html() %>%
-  html_nodes("table")
-stock_info <- html_table(tables[[1]], fill=TRUE) 
-
-clean_wiki <- stock_info %>%
-  select(Symbol, Security, `GICS Sector`, `GICS Sub Industry`)
-
-head(clean_wiki)
-
-
-summary(industries_percentage)
-data1 <- industries_percentage %>%
-  rename(Two=`Two Month Percantage Change`)
-
-data <- data1 %>%
-    mutate(Two=round(Two,digits=-1)) %>%
-    group_by(Two) %>%
-    summarize(
-      Count=n()) 
-
-time_choice_values = names(industries_percentage)[5:7]
-
+ggplot(restaurant_density_map, aes(x = long, y = lat, group = group
+                      , fill = fast_density)) +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of colleges planning for in-person") +
+  theme(legend.position="bottom")
 
 
 

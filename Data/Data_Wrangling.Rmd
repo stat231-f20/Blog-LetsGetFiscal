@@ -217,7 +217,7 @@ fast_food_density <- rest_city %>%
   mutate(`Amount of Fast Food`=1) %>%
   group_by(State) %>%
   summarize(
-    fast_density = sum(`Amount of Fast Food`)/sum(city.pop)
+    fast_density = sum(`Amount of Fast Food`)
   ) %>%
   na.omit
 

@@ -42,8 +42,9 @@ top_5 <- restaurants %>%
   summarize(
     Count = n()
   ) %>%
-  arrange(desc(Count)) %>%
-  head(5)
+  arrange((Count)) %>%
+  filter(Count>20)
+  head(20)
 
 #Top 5 are: McDonald's, Burger King, Taco Bell, Wendy's, and Arby's
 names = unique(top_5$name)

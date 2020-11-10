@@ -9,6 +9,9 @@ library(knitr)
 library(janitor)
 library(rtweet)
 library(tidytext)
+library(countrycode)
+library(rworldmap)
+
 
 library(plotly)
 library(dplyr)
@@ -26,7 +29,7 @@ knitr::opts_chunk$set(
 ```
 
 
-#Finding Restaurants 
+#Intro: Starbucks Across the World
 
 ```{r}
 
@@ -35,23 +38,11 @@ starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 city_pop <- read_csv("uscitypopdensity.csv")
 
-#Finding top 5 restaurants based on amount
+worldmap <- getMap(resolution = "coarse")
 
-top_5 <- restaurants %>%
-  group_by(name) %>%
-  summarize(
-    Count = n()
-  ) %>%
-  arrange((Count)) %>%
-  filter(Count>20)
-  head(20)
-
-#Top 5 are: McDonald's, Burger King, Taco Bell, Wendy's, and Arby's
-names = unique(top_5$name)
-
-fast_food <- restaurants %>%
-  filter(name==unique(top_5$name)) %>%
-  rename(Restaurant=name)
+plot(worldmap, bg = "lightblue", col = "black")
+points(starbucks$Longitude, starbucks$Latitude, 
+       col = "red", cex = .01)
 
 
 ```

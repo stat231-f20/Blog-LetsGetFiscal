@@ -40,10 +40,13 @@ city_pop <- read_csv("uscitypopdensity.csv")
 
 worldmap <- getMap(resolution = "coarse")
 
-plot(worldmap, bg = "lightblue", col = "black")
+plot(m, bg = "lightblue", col = "black")
 points(starbucks$Longitude, starbucks$Latitude, 
        col = "red", cex = .01)
 
+
+
+#https://cran.r-project.org/web/packages/usmap/vignettes/advanced-mapping.html
 
 ```
 

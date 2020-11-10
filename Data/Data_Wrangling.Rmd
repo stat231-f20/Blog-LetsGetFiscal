@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 ```{r}
 
 #Downloading data sets
-restaurants <- read_csv("FastFoodRestaurants.csv")
+starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 city_pop <- read_csv("uscitypopdensity.csv")
 

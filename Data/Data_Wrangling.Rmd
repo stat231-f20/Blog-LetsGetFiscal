@@ -121,13 +121,42 @@ us <- map_data(map = "state"
                        , region = ".") 
 
 ggplot() +
-  geom_polygon(data=us, aes(x=long, y=lat, group = group),color="blue", fill="black" ) +
+  geom_polygon(data=us, aes(x=long, y=lat, group = group),color="blue", fill="black") +
   geom_point(data=us_map_star, aes(x = Longitude, y = Latitude, group=group), color="red") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
   labs(fill = "Proportion of colleges planning for in-person") +
   theme(legend.position="bottom") +
   scale_fill_distiller(palette = "BuPu", direction = "horizantle")
+
+```
+
+#Map of US locations With Magnitude of Starbucks Locations
+
+```{r}
+
+library(tmap)
+
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+city_star <- us_map_star %>%
+  group_by(City) %>%
+  summarize(
+    Count = n()
+  )
+
+city_count_star <- us_map_star %>%
+  left_join(city_star, by = "City") %>%
+  filter(Count>5)
+
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="blue", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count)) +
+  theme_void() 
+
+
 
 ```
 

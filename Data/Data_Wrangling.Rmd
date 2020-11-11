@@ -11,6 +11,8 @@ library(rtweet)
 library(tidytext)
 library(countrycode)
 library(rworldmap)
+library(viridis)
+
 
 
 library(plotly)
@@ -38,47 +40,7 @@ starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 city_pop <- read_csv("uscitypopdensity.csv")
 
-worldmap <- getMap(resolution = "coarse")
-
-plot(worldmap, bg = "lightblue", col = "black")
-points(starbucks$Longitude, starbucks$Latitude, 
-       col = "red", cex = .01)
-
-
-us_stars <- starbucks %>%
-  filter(Country=="US") %>%
-  rename(State=`State/Province`) %>%
-  filter(State!="AK") %>%
-  filter(State!="HI")
-  
-usa <- map_data(map = "state"
-                       , region = ".")
-usa_states <- usa %>%
-  select(region, group) %>%
-  group_by(region) %>%
-  summarize(
-    group=sum(group)/n()
-  )
-
-state_info <- data.frame(state_full = tolower(state.name)
-                         , State = state.abb
-                         , Region = state.region)
-
-us_map_star <- us_stars %>%
-  left_join(state_info, by = "State") %>%
-  left_join(usa_states, by = c("state_full" = "region"))
-
-us <- map_data(map = "state"
-                       , region = ".") 
-
-ggplot() +
-  geom_polygon(data=us, aes(x=long, y=lat, group = group),color="blue", fill="black" ) +
-  geom_point(data=us_map_star, aes(x = Longitude, y = Latitude, group=group), color="red") +
-  theme_void() +
-  coord_fixed(ratio = 1.3) +
-  labs(fill = "Proportion of colleges planning for in-person") +
-  theme(legend.position="bottom") +
-  scale_fill_distiller(palette = "BuPu", direction = "horizantle")
+names = unique(starbucks$`Brand`)
 
 ```
 
@@ -152,8 +114,10 @@ city_count_star <- us_map_star %>%
 
 
 ggplot() +
-  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="blue", fill="black", alpha=0.3) +
-  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count)) +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
   theme_void() 
 
 
@@ -167,8 +131,6 @@ ggplot() +
 
 
 path_in <- "Users/mattadams/Desktop/Sophomore Year 1st Semester/Data Science/Blog-LetsGetFiscal/Data"
-setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
-
 
 key <- readLines("api_key_twitter.txt")
 secret_key <- readLines("api_secret_key.txt")
@@ -176,24 +138,17 @@ bearer_token <- readLines("api_bearer_token.txt")
 access_token <- readLines("access_token.txt")
 secret_access_token <- readLines("secret_access_token.txt")
 
+#setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
 
 data(stop_words)
+https <- rbind(stop_words, c("https", "SMART"))
+t.co <- rbind(https, c("t.co", "SMART"))
+stop_words_2 <- t.co
 
 nrc_lexicon <- get_sentiments("nrc")
 
-mcds <- search_users(q="#mcdonald",
-                      n = 50) %>%
-  filter(lang=="en")
-
-wendys <- search_users(q="#wendys",
-                      n = 50) %>%
-  filter(lang=="en")
-
-burgerking <- search_users(q="#burgerking",
-                      n = 50) %>%
-  filter(lang=="en")
-
-tweets <- search_tweets("mcdonalds", n = 100, lang = "en") %>%
+tweets <- search_tweets("starbucks", n = 1000, lang = "en") %>%
   select(status_id, text, location) %>%
   filter(!is.na(location))
 
@@ -204,21 +159,18 @@ tweet_locations <- tweets %>%
   select(status_id, text, State) %>%
   na.omit
   
-
-#NEED:
-  #Can we shade in densities by state with a general lat and long?
-    #Sem-join 
-  #Can we get a sentiment analysis of a group of text that is still attached to its location?
-
-https <- rbind(stop_words, c("https", "SMART"))
-t.co <- rbind(https, c("t.co", "SMART"))
-stop_words_2 <- t.co
-
 #Before I create the one word per row dataset, group_by location and id, then it will keep tweet ID variable in
-tweet_words <- tweet_locations %>%
+
+tweet_words0 <- tweet_locations %>%
   group_by(status_id, State) %>%
   unnest_tokens(output = word, input = text) %>%
   anti_join(stop_words_2, by="word")
+  
+tweet_words <- tweet_words0 %>%
+  group_by(State) %>%
+  summarize(
+    Total_Words = n(), word=word, State=State, status_id = status_id
+  )
 
 positive <- nrc_lexicon %>%
   filter(sentiment=="positive")
@@ -227,7 +179,65 @@ negative <- nrc_lexicon %>%
   filter(sentiment=="negative")
 
 tweet_positive <- tweet_words %>%
-  semi_join(positive, by="word")
+  inner_join(positive, by="word") 
+
+tweet_negative <- tweet_words %>%
+  inner_join(negative, by="word")
+
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State.abb = state.abb
+                         , State.name = state.name
+                         , Region = state.region)
+
+word_count <- tweet_words %>%
+  select(State, Total_Words) %>%
+  group_by(State) %>%
+  summarize(
+    N = n()
+  )
+
+starbucks_positive <- tweet_positive %>%
+  mutate(State=str_trim(State)) %>%
+  group_by(State) %>%
+  summarize (
+    positive.proportion = n()/(sum(Total_Words)/n())
+  ) %>%
+  inner_join(state_info, by= c("State"="State.abb")) %>%
+  right_join(usa_states, by = c("state_full" = "region"))
+
+#Plotting positive across US
+ggplot(starbucks_positive, aes(x = long, y = lat, group = group
+                      , fill = positive.proportion)) +
+  scale_fill_viridis() +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of Positive Words in Tweets Per State",
+       caption = "*Grey states have no tweet information") +
+  theme(legend.position="bottom") 
+  
+#Plotting negative across US
+starbucks_negative <- tweet_negative %>%
+  mutate(State=str_trim(State)) %>%
+  group_by(State) %>%
+  summarize (
+    negative.proportion = n()/(sum(Total_Words)/n())
+  ) %>%
+  inner_join(state_info, by= c("State"="State.abb")) %>%
+  right_join(usa_states, by = c("state_full" = "region"))
+
+ggplot(starbucks_negative, aes(x = long, y = lat, group = group
+                      , fill = negative.proportion)) +
+  scale_fill_viridis() +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of Negative Words in Tweets Per State",
+       caption = "*Grey states have no tweet information") +
+  theme(legend.position="bottom") 
+  
+
+
 
 
 ```

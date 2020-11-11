@@ -39,6 +39,8 @@ knitr::opts_chunk$set(
 starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 city_pop <- read_csv("uscitypopdensity.csv")
+county_pop <- read_csv("us_county.csv")
+
 
 names = unique(starbucks$`Brand`)
 
@@ -125,7 +127,7 @@ ggplot() +
 ```
 
 
-#Collecting tweets
+#Collecting and Mapping tweets
 
 ```{r}
 
@@ -260,8 +262,8 @@ state_info <- data.frame(state_full = tolower(state.name)
                          , Region = state.region)
 
 city_pop_map <- city_pop_1 %>%
-  left_join(state_info, by = "State") %>%
-  right_join(usa_states, by = c("state_full" = "region"))
+  inner_join(state_info, by = "State") %>%
+  inner_join(usa_states, by = c("state_full" = "region"))
 
 ggplot(city_pop_map, aes(x = long, y = lat, group = group
                       , fill = pop_dens)) +
@@ -281,27 +283,43 @@ ggplot(city_pop_map, aes(x = long, y = lat, group = group
 
 ```{r}
 
-city_income_1 <- city_income %>%
-  rename(State=State_Name) %>%
-  select(State, Median)
+clean_county <- county_pop %>%
+  separate(county, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "Census Area"
+           , remove = FALSE) %>%
+  select(County, state_code, population, long, lat) %>%
+  mutate(County=tolower(County)) %>%
+  mutate(County=str_trim(County))
+  
+  
 
-usa_states <- map_data(map = "state"
+usa_states0 <- map_data(map = "county"
                        , region = ".")
+
+usa_states <- usa_states0 %>%
+  group_by(subregion) %>%
+  summarize(
+    group = mean(group)
+  ) %>%
+  mutate(subregion=str_trim(subregion))
+
 
 state_info <- data.frame(state_full = tolower(state.name)
                          , State = state.name
                          , Region = state.region)
 
-city_income_1 <- city_income_1 %>%
-  left_join(state_info, by = "State") %>%
-  right_join(usa_states, by = c("state_full" = "region"))
+county_population <- clean_county %>%
+  inner_join(usa_states, by = c("County" = "subregion"))
 
-ggplot(city_income_1, aes(x = long, y = lat, group = group
-                      , fill = Median)) +
+ggplot(county_population, aes(x = long, y = lat, group = group
+                      , fill = population)) +
   geom_polygon(color = "white") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
-  labs(fill = "Proportion of colleges planning for in-person") +
+  labs(fill = "Population Per County") +
   theme(legend.position="bottom")
 
 

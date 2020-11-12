@@ -307,7 +307,8 @@ final_state_factors <- state_factors %>%
   ungroup()
 
 final_final_state_factors <- final_state_factors %>%
-  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector()))
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std)
 
 
 # apply the k-means algorithm (set the seed to make the results reproducible)

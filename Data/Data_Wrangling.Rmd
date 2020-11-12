@@ -42,8 +42,6 @@ city_pop <- read_csv("uscitypopdensity.csv")
 county_pop <- read_csv("us_county.csv")
 
 
-names = unique(starbucks$`Brand`)
-
 ```
 
 #Displaying Starbucks Location:
@@ -111,8 +109,7 @@ city_star <- us_map_star %>%
   )
 
 city_count_star <- us_map_star %>%
-  left_join(city_star, by = "City") %>%
-  filter(Count>5)
+  left_join(city_star, by = "City") 
 
 
 ggplot() +
@@ -279,7 +276,7 @@ ggplot(city_pop_map, aes(x = long, y = lat, group = group
 ```
 
 
-#City Income 
+#State-wide population 
 
 ```{r}
 
@@ -293,34 +290,41 @@ clean_county <- county_pop %>%
   select(County, state_code, population, long, lat) %>%
   mutate(County=tolower(County)) %>%
   mutate(County=str_trim(County))
-  
-  
 
-usa_states0 <- map_data(map = "county"
+state_pop <- clean_county %>%
+  group_by(state_code) %>%
+  summarize(
+    pop = sum(population)
+  )
+  
+  
+usa_states <- map_data(map = "state"
                        , region = ".")
 
-usa_states <- usa_states0 %>%
-  group_by(subregion) %>%
-  summarize(
-    group = mean(group)
-  ) %>%
-  mutate(subregion=str_trim(subregion))
+#usa_states <- usa_states0 %>%
+ # group_by(subregion) %>%
+ # summarize(
+  #  group = mean(group)
+  #) %>%
+  #mutate(subregion=str_trim(subregion))
 
 
 state_info <- data.frame(state_full = tolower(state.name)
-                         , State = state.name
+                         , State = state.abb
                          , Region = state.region)
 
-county_population <- clean_county %>%
-  inner_join(usa_states, by = c("County" = "subregion"))
 
-ggplot(county_population, aes(x = long, y = lat, group = group
-                      , fill = population)) +
-  geom_polygon(color = "white") +
+county_population <- state_pop %>%
+  left_join(state_info, by= c("state_code"="State")) %>%
+  left_join(usa_states, by = c("state_full" = "region"))
+
+ggplot() +
+  geom_polygon(data=county_population, aes(x = long, y = lat, group=group, fill=population)) +
   theme_void() +
   coord_fixed(ratio = 1.3) +
-  labs(fill = "Population Per County") +
-  theme(legend.position="bottom")
+  labs(fill = "Proportion of colleges planning for in-person") +
+  theme(legend.position="bottom") +
+  scale_fill_distiller(palette = "BuPu", direction = "horizantle")
 
 
 ```
@@ -363,7 +367,7 @@ state_info <- data.frame(state_full = tolower(state.name)
 
 restaurant_density_map <- fast_food_density %>%
   left_join(state_info, by = "State") %>%
-  right_join(usa_states, by = c("state_full" = "region"))
+  left_join(usa_states, by = c("state_full" = "region"))
 
 
 

@@ -36,12 +36,12 @@ knitr::opts_chunk$set(
 ```{r}
 
 #Downloading data sets
-starbucks <- read_csv("starbucks.csv")
-city_income <- read_csv("kaggle_income.csv")
-county_pop <- read_csv("us_county.csv")
-unemployment <- read_csv("unemployment.csv")
-starbucks_positive <- read_csv("starbucks_positive.csv")
-starbucks_negative <- read_csv("starbucks_negative.csv")
+starbucks <- read_csv("Data/starbucks.csv")
+city_income <- read_csv("Data/kaggle_income.csv")
+county_pop <- read_csv("Data/us_county.csv")
+unemployment <- read_csv("Data/unemployment.csv")
+starbucks_positive <- read_csv("Data/starbucks_positive.csv")
+starbucks_negative <- read_csv("Data/starbucks_negative.csv")
 
 
 
@@ -303,8 +303,8 @@ final_state_factors <- state_factors %>%
   mutate(negative.proportion = as.numeric(negative.proportion)) %>%
   mutate(`Avg. Unemployment Rate` = round(`Avg. Unemployment Rate`, 3)) %>%
   mutate(`Avg. Income` = round(`Avg. Income`, 3)) %>%
-  mutate(negative.proportion = round(negative.proportion, 3)) 
-
+  mutate(negative.proportion = round(negative.proportion, 3)) %>%
+  ungroup()
 
 final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector()))

@@ -48,6 +48,11 @@ county_pop <- read_csv("us_county.csv")
 
 
 ```{r}
+income_state <- city_income %>%
+  group_by(State_Name, State_ab) %>%
+  summarize("Avg. Income" = mean(Mean)) %>%
+  mutate(State = tolower(State_Name))
+
 
 #World Map
 worldmap <- getMap(resolution = "coarse")

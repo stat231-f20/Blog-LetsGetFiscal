@@ -310,10 +310,11 @@ final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
   select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std)
 
-
+practice <- final_state_factors %>%
+  select(`Avg. Unemployment Rate`,`Avg. Income`, negative.proportion)
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(15)
-km_out <- kmeans(final_final_state_factors, centers = 3, nstart = 20)
+km_out <- kmeans(practice, centers = 3, nstart = 20)
 
 # km_out is of class "kmeans"; it's a kmeans object
 class(km_out)

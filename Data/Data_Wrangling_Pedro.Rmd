@@ -40,6 +40,7 @@ starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 city_pop <- read_csv("uscitypopdensity.csv")
 county_pop <- read_csv("us_county.csv")
+unemployment <- read_csv("unemployment.csv")
 
 
 ```
@@ -390,6 +391,12 @@ income_state <- city_income %>%
   group_by(State_Name, State_ab) %>%
   summarize("Avg. Income" = mean(Mean)) %>%
   mutate(State = tolower(State_Name))
+
+unemployment_state <- unemployment %>%
+  group_by(State) %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate)) %>%
+  mutate(State = tolower(State))
+
 
 ```
 

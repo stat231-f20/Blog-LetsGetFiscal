@@ -40,6 +40,9 @@ starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
 county_pop <- read_csv("us_county.csv")
 unemployment <- read_csv("unemployment.csv")
+starbucks_positive <- read_csv("starbucks_positive.csv")
+starbucks_negative <- read_csv("starbucks_negative.csv")
+
 
 
 ```
@@ -294,16 +297,16 @@ state_factors$`Avg. Unemployment Rate`[10] <- 7.6
 
 final_state_factors <- state_factors %>%
   na.omit() %>%
-  select(`Avg. Unemployment Rate`, `Avg. Income`, negative.proportion) 
-
-
-final_final_state_factors <- final_state_factors %>%
+  select(`Avg. Unemployment Rate`, `Avg. Income`, negative.proportion)  %>%
   mutate(`Avg. Unemployment Rate` = as.numeric(`Avg. Unemployment Rate`)) %>%
   mutate(`Avg. Income` = as.numeric(`Avg. Income`)) %>%
   mutate(negative.proportion = as.numeric(negative.proportion)) %>%
   mutate(`Avg. Unemployment Rate` = round(`Avg. Unemployment Rate`, 3)) %>%
   mutate(`Avg. Income` = round(`Avg. Income`, 3)) %>%
-  mutate(negative.proportion = round(negative.proportion, 3)) %>%
+  mutate(negative.proportion = round(negative.proportion, 3)) 
+
+
+final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector()))
 
 
@@ -353,7 +356,6 @@ state_pop <- clean_county %>%
   summarize(
     pop = sum(population)
   )
-  
   
 usa_states <- map_data(map = "state"
                        , region = ".")

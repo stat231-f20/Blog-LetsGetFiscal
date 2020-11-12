@@ -38,8 +38,8 @@ knitr::opts_chunk$set(
 #Downloading data sets
 starbucks <- read_csv("starbucks.csv")
 city_income <- read_csv("kaggle_income.csv")
-city_pop <- read_csv("uscitypopdensity.csv")
 county_pop <- read_csv("us_county.csv")
+unemployment <- read_csv("unemployment.csv")
 
 
 ```

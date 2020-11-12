@@ -313,7 +313,8 @@ state_info <- data.frame(state_full = tolower(state.name)
                          , State = state.abb
                          , Region = state.region)
 
-
+#WHY DOES IT ALWAYS INCREASE ROWS
+#HOW CAN I FIX VISUALIZATION
 county_population <- state_pop %>%
   left_join(state_info, by= c("state_code"="State")) %>%
   left_join(usa_states, by = c("state_full" = "region"))

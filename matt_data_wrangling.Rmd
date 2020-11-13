@@ -13,9 +13,6 @@ library(countrycode)
 library(rworldmap)
 library(viridis)
 library(GGally)
-
-
-
 library(plotly)
 library(dplyr)
 
@@ -273,6 +270,12 @@ unemployment_state <- unemployment %>%
   summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
   mutate(State = tolower(State))
 
+starbucks_state <- starbucks %>%
+  group_by(`State/Province`) %>%
+  na.omit() %>%
+  summarize("Num. Starbucks" = n())
+  
+
 star_neg <- starbucks_negative %>%
   select(negative.proportion, state_full) %>%
   group_by(state_full) %>%
@@ -292,13 +295,14 @@ star_pos <- starbucks_positive %>%
 state_factors <- income_state %>%
   left_join(unemployment_state, by="State") %>%
   left_join(star_neg, by = c("State"="state_full")) %>%
-  left_join(star_pos, by = c("State"="state_full")) 
+  left_join(star_pos, by = c("State"="state_full")) %>%
+  left_join(starbucks_state, by = c("State_ab" = "State/Province"))
 
 state_factors$`Avg. Unemployment Rate`[10] <- 7.6
 
 final_state_factors <- state_factors %>%
   na.omit() %>%
-  select(`Avg. Unemployment Rate`, `Avg. Income`, negative.proportion)  %>%
+  select(`Avg. Unemployment Rate`, `Avg. Income`, negative.proportion, `Num. Starbucks`)  %>%
   mutate(`Avg. Unemployment Rate` = as.numeric(`Avg. Unemployment Rate`)) %>%
   mutate(`Avg. Income` = as.numeric(`Avg. Income`)) %>%
   mutate(negative.proportion = as.numeric(negative.proportion)) %>%
@@ -309,10 +313,10 @@ final_state_factors <- state_factors %>%
 
 final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
-  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std)
+  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std, `Num. Starbucks_std`)
 
 not_std <- final_state_factors %>%
-  select(`Avg. Unemployment Rate`,`Avg. Income`, negative.proportion)
+  select(`Avg. Unemployment Rate`,`Avg. Income`, negative.proportion, `Num. Starbucks`)
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -350,9 +354,7 @@ ggplot(final_cluster, aes(x = long, y = lat, group = group
 
 names <- unemployment
 
-vars_std = c("Avg. Unemployment Rate", "Avg. Income", "negative.proportion")
-
-library(GGally)
+vars_std = c("Avg. Unemployment Rate", "Avg. Income", "negative.proportion", "Num. Starbucks")
 
 ggpairs(data = final_cluster
         , aes(color = clust3_std) 
@@ -382,6 +384,11 @@ unemployment_state <- unemployment %>%
   summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
   mutate(State = tolower(State))
 
+starbucks_state <- starbucks %>%
+  group_by(`State/Province`) %>%
+  na.omit() %>%
+  summarize("Num. Starbucks" = n())
+
 star_pos <- starbucks_positive %>%
   select(positive.proportion, state_full) %>%
   group_by(state_full) %>%
@@ -393,13 +400,14 @@ star_pos <- starbucks_positive %>%
 state_factors <- income_state %>%
   left_join(unemployment_state, by="State") %>%
   left_join(star_neg, by = c("State"="state_full")) %>%
-  left_join(star_pos, by = c("State"="state_full")) 
+  left_join(star_pos, by = c("State"="state_full")) %>%
+  left_join(starbucks_state, by = c("State_ab" = "State/Province"))
 
 state_factors$`Avg. Unemployment Rate`[10] <- 7.6
 
 final_state_factors <- state_factors %>%
   na.omit() %>%
-  select(`Avg. Unemployment Rate`, `Avg. Income`, positive.proportion)  %>%
+  select(`Avg. Unemployment Rate`, `Avg. Income`, positive.proportion, `Num. Starbucks`)  %>%
   mutate(`Avg. Unemployment Rate` = as.numeric(`Avg. Unemployment Rate`)) %>%
   mutate(`Avg. Income` = as.numeric(`Avg. Income`)) %>%
   mutate(positive.proportion = as.numeric(positive.proportion)) %>%
@@ -410,10 +418,10 @@ final_state_factors <- state_factors %>%
 
 final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
-  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, positive.proportion_std)
+  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, positive.proportion_std, `Num. Starbucks_std`)
 
 not_std <- final_state_factors %>%
-  select(`Avg. Unemployment Rate`,`Avg. Income`, positive.proportion)
+  select(`Avg. Unemployment Rate`,`Avg. Income`, positive.proportion, `Num. Starbucks`)
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -449,7 +457,7 @@ ggplot(final_cluster, aes(x = long, y = lat, group = group
 
 names <- unemployment
 
-vars_std = c("Avg. Unemployment Rate", "Avg. Income", "positive.proportion")
+vars_std = c("Avg. Unemployment Rate", "Avg. Income", "positive.proportion", "Num. Starbucks")
 
 ggpairs(data = final_cluster
         , aes(color = clust3_std) 

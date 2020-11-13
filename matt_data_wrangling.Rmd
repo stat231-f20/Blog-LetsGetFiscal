@@ -12,6 +12,7 @@ library(tidytext)
 library(countrycode)
 library(rworldmap)
 library(viridis)
+library(GGally)
 
 
 
@@ -254,7 +255,7 @@ ggplot(starbucks_negative, aes(x = long, y = lat, group = group
 ```
 
 
-#Clustering by Unemployment, Consumer Sentiment, and Income of each state
+#Clustering by Unemployment, Negative Consumer Sentiment, and Income of each state
 
 
 ```{r}
@@ -336,11 +337,11 @@ clust_3 <- final_state_factors %>%
 usa_states <- map_data(map = "state"
                        , region = ".")
 
-final_cluster <- clust_3 %>%
+final_cluster <- clust_3_std %>%
   left_join(usa_states, by = c("State_Name" = "region"))
 
 ggplot(final_cluster, aes(x = long, y = lat, group = group
-                      , fill = clust3_not_std)) +
+                      , fill = clust3_std)) +
   geom_polygon(color = "black") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
@@ -349,8 +350,115 @@ ggplot(final_cluster, aes(x = long, y = lat, group = group
 
 names <- unemployment
 
+vars_std = c("Avg. Unemployment Rate", "Avg. Income", "negative.proportion")
+
+library(GGally)
+
+ggpairs(data = final_cluster
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+#Blue cluster for the win
+
 ```
 
+
+#Clustering by Unemployment, Positive Consumer Sentiment, and Income of each state
+
+
+```{r}
+
+income_state <- city_income %>%
+  group_by(State_Name, State_ab) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) %>%
+  mutate(State = tolower(State_Name)) %>%
+  select(State, `Avg. Income`, State_ab)
+
+unemployment_state <- unemployment %>%
+  group_by(State) %>%
+  na.omit() %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
+  mutate(State = tolower(State))
+
+star_pos <- starbucks_positive %>%
+  select(positive.proportion, state_full) %>%
+  group_by(state_full) %>%
+  na.omit() %>%
+  summarize(
+    positive.proportion = mean(positive.proportion, na.rm=TRUE)
+  )
+
+state_factors <- income_state %>%
+  left_join(unemployment_state, by="State") %>%
+  left_join(star_neg, by = c("State"="state_full")) %>%
+  left_join(star_pos, by = c("State"="state_full")) 
+
+state_factors$`Avg. Unemployment Rate`[10] <- 7.6
+
+final_state_factors <- state_factors %>%
+  na.omit() %>%
+  select(`Avg. Unemployment Rate`, `Avg. Income`, positive.proportion)  %>%
+  mutate(`Avg. Unemployment Rate` = as.numeric(`Avg. Unemployment Rate`)) %>%
+  mutate(`Avg. Income` = as.numeric(`Avg. Income`)) %>%
+  mutate(positive.proportion = as.numeric(positive.proportion)) %>%
+  mutate(`Avg. Unemployment Rate` = round(`Avg. Unemployment Rate`, 3)) %>%
+  mutate(`Avg. Income` = round(`Avg. Income`, 3)) %>%
+  mutate(positive.proportion = round(positive.proportion, 3)) %>%
+  ungroup()
+
+final_final_state_factors <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, positive.proportion_std)
+
+not_std <- final_state_factors %>%
+  select(`Avg. Unemployment Rate`,`Avg. Income`, positive.proportion)
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+km_out_std <- kmeans(final_final_state_factors, centers = 3, nstart = 20)
+
+km_not_std <- kmeans(not_std, centers = 3, nstart = 20)
+
+
+# add cluster assignments to the data frame
+clust_3_std <- final_state_factors %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name))
+
+clust_3 <- final_state_factors %>%
+  mutate(clust3_not_std = as.character(km_not_std$cluster)) %>%
+  arrange(clust3_not_std) %>%
+  mutate(State_Name=tolower(State_Name))
+
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+final_cluster <- clust_3_std %>%
+  left_join(usa_states, by = c("State_Name" = "region"))
+
+ggplot(final_cluster, aes(x = long, y = lat, group = group
+                      , fill = clust3_std)) +
+  geom_polygon(color = "black") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "3 Clusters of Starbucks") +
+  theme(legend.position="bottom")
+
+names <- unemployment
+
+vars_std = c("Avg. Unemployment Rate", "Avg. Income", "positive.proportion")
+
+ggpairs(data = final_cluster
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+#Blue cluster for the win
+
+```
 
 #State-wide population 
 

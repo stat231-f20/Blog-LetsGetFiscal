@@ -310,28 +310,42 @@ final_final_state_factors <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
   select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std)
 
-practice <- final_state_factors %>%
+not_std <- final_state_factors %>%
   select(`Avg. Unemployment Rate`,`Avg. Income`, negative.proportion)
+
 # apply the k-means algorithm (set the seed to make the results reproducible)
-set.seed(15)
-km_out <- kmeans(practice, centers = 3, nstart = 20)
+set.seed(75)
+km_out_std <- kmeans(final_final_state_factors, centers = 3, nstart = 20)
 
-# km_out is of class "kmeans"; it's a kmeans object
-class(km_out)
-# you can use the syntax km_out$name to refer to any of the named elements below
-names(km_out)
-# for example, let's see what the cluster sizes are (how many cities are in each cluster)
-km_out$size
-# for another example, let's see where the centroids are
-km_out$centers
+km_not_std <- kmeans(not_std, centers = 3, nstart = 20)
 
-BigCities_km <- BigCities %>%
-  mutate(cluster = as.character(km_out$cluster))
 
-ggplot(data = BigCities_km, aes(x = longitude, y = latitude)) + 
-  geom_point(aes(color = cluster), alpha = 0.5) +
-  # add centroids to plot
-  geom_point(data = as.data.frame(km_out$centers), shape = "X", size = 3)
+# add cluster assignments to the data frame
+clust_3_std <- final_state_factors %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name))
+
+clust_3 <- final_state_factors %>%
+  mutate(clust3_not_std = as.character(km_not_std$cluster)) %>%
+  arrange(clust3_not_std) %>%
+  mutate(State_Name=tolower(State_Name))
+
+
+
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+final_cluster <- clust_3 %>%
+  left_join(usa_states, by = c("State_Name" = "region"))
+
+ggplot(final_cluster, aes(x = long, y = lat, group = group
+                      , fill = clust3_not_std)) +
+  geom_polygon(color = "black") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "3 Clusters of Starbucks") +
+  theme(legend.position="bottom")
 
 names <- unemployment
 

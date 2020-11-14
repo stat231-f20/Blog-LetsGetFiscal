@@ -337,7 +337,6 @@ clust_3 <- final_state_factors %>%
   mutate(State_Name=tolower(State_Name))
 
 
-
 usa_states <- map_data(map = "state"
                        , region = ".")
 
@@ -360,6 +359,23 @@ ggpairs(data = final_cluster
         , aes(color = clust3_std) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
+
+km_out_std$centers
+
+#Arizona
+state_unemployment <- clust_3_std %>%
+  filter(clust3_std==3) %>%
+  arrange(desc(`Avg. Unemployment Rate`))
+
+#mississippi
+state_income <- clust_3_std %>%
+  filter(clust3_std==3) %>%
+  arrange((`Avg. Income`))
+
+#maine
+state_prop <- clust_3_std %>%
+  filter(clust3_std==3) %>%
+  arrange((`negative.proportion`))
 
 #Blue cluster for the win
 

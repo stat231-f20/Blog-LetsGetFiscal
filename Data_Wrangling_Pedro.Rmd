@@ -379,7 +379,42 @@ state_prop <- clust_3_std %>%
 
 #Blue cluster for the win
 
+#calculate centers
+#center of cluster 1 is california since it's only state there
 
+#cluster 2
+clust_2 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==2) 
+
+clust_2 <- clust_2 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[2,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[2,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[2,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[2,3])^2)
+  ) %>%
+  arrange(dist)
+
+#cluster 3
+clust_3 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==3) 
+
+clust_3 <- clust_3 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[3,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[3,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[3,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[3,3])^2)
+  ) %>%
+  arrange(dist)
 
 ```
 

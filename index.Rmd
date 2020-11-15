@@ -1,5 +1,5 @@
 ---
-title: "Your Project Title Here"
+title: "Correia Consultant Agency"
 author: "Your Names Here"
 date: "Add a date"
 output:
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.align="center")
 library(tidyverse)
 ```
 
-# Blog Draft
+# Introduction
 
 ## Header 2
 

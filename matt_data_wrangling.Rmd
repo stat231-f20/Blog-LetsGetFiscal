@@ -382,100 +382,89 @@ state_prop <- clust_3_std %>%
 ```
 
 
-#Clustering by Unemployment, Positive Consumer Sentiment, and Income of each state
-
+#MAINE: Clustering by Unemployment, Starbucks density, and Income of each county
 
 ```{r}
 
-income_state <- city_income %>%
-  group_by(State_Name, State_ab) %>%
+income_city <- city_income %>%
+  filter(State_Name=="Maine") %>%
+  group_by(City) %>%
   na.omit() %>%
-  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) %>%
-  mutate(State = tolower(State_Name)) %>%
-  select(State, `Avg. Income`, State_ab)
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
 
-unemployment_state <- unemployment %>%
-  group_by(State) %>%
-  na.omit() %>%
-  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
-  mutate(State = tolower(State))
-
-starbucks_state <- starbucks %>%
-  group_by(`State/Province`) %>%
-  na.omit() %>%
+starbucks_city <- starbucks %>%
+  filter(`State/Province`=="ME") %>%
+  group_by(`City`) %>%
   summarize("Num. Starbucks" = n())
 
-star_pos <- starbucks_positive %>%
-  select(positive.proportion, state_full) %>%
-  group_by(state_full) %>%
-  na.omit() %>%
+city_info <- income_city %>%
+  left_join(starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+county_info <- city_income %>%
+  filter(State_ab=="ME") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(city_info, by = c("City")) %>%
+  group_by(County) %>%
   summarize(
-    positive.proportion = mean(positive.proportion, na.rm=TRUE)
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
   )
 
-state_factors <- income_state %>%
-  left_join(unemployment_state, by="State") %>%
-  left_join(star_neg, by = c("State"="state_full")) %>%
-  left_join(star_pos, by = c("State"="state_full")) %>%
-  left_join(starbucks_state, by = c("State_ab" = "State/Province"))
-
-state_factors$`Avg. Unemployment Rate`[10] <- 7.6
-
-final_state_factors <- state_factors %>%
+unemployment_county <- unemployment %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>%
+  group_by(County) %>%
   na.omit() %>%
-  select(`Avg. Unemployment Rate`, `Avg. Income`, positive.proportion, `Num. Starbucks`)  %>%
-  mutate(`Avg. Unemployment Rate` = as.numeric(`Avg. Unemployment Rate`)) %>%
-  mutate(`Avg. Income` = as.numeric(`Avg. Income`)) %>%
-  mutate(positive.proportion = as.numeric(positive.proportion)) %>%
-  mutate(`Avg. Unemployment Rate` = round(`Avg. Unemployment Rate`, 3)) %>%
-  mutate(`Avg. Income` = round(`Avg. Income`, 3)) %>%
-  mutate(positive.proportion = round(positive.proportion, 3)) %>%
-  ungroup()
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) 
 
-final_final_state_factors <- final_state_factors %>%
+county_factors <- county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+final_county <- county_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
-  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, positive.proportion_std, `Num. Starbucks_std`)
-
-not_std <- final_state_factors %>%
-  select(`Avg. Unemployment Rate`,`Avg. Income`, positive.proportion, `Num. Starbucks`)
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+final_county_factors <- final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
-km_out_std <- kmeans(final_final_state_factors, centers = 3, nstart = 20)
-
-km_not_std <- kmeans(not_std, centers = 3, nstart = 20)
+county_km <- kmeans(final_county_factors, centers = 3, nstart = 20)
 
 
 # add cluster assignments to the data frame
-clust_3_std <- final_state_factors %>%
-  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+county_clust <- final_county %>%
+  mutate(clust3_std = as.character(county_km$cluster)) %>%
   arrange(clust3_std) %>%
-  mutate(State_Name=tolower(State_Name))
+  mutate(County=tolower(County))
 
-clust_3 <- final_state_factors %>%
-  mutate(clust3_not_std = as.character(km_not_std$cluster)) %>%
-  arrange(clust3_not_std) %>%
-  mutate(State_Name=tolower(State_Name))
+usa_states <- map_data(map = "county"
+                       , region = "maine") %>%
+  select(subregion, long, lat, group)
 
-usa_states <- map_data(map = "state"
-                       , region = ".")
+final_cluster <- county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
 
-final_cluster <- clust_3_std %>%
-  left_join(usa_states, by = c("State_Name" = "region"))
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std)) +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in Maine",
+       caption = "*Grey states have no tweet information") +
+  theme_void()
 
-ggplot(final_cluster, aes(x = long, y = lat, group = group
-                      , fill = clust3_std)) +
-  geom_polygon(color = "black") +
-  theme_void() +
-  coord_fixed(ratio = 1.3) +
-  labs(fill = "3 Clusters of Starbucks") +
-  theme(legend.position="bottom")
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
-names <- unemployment
-
-vars_std = c("Avg. Unemployment Rate", "Avg. Income", "positive.proportion", "Num. Starbucks")
-
-ggpairs(data = final_cluster
+ggpairs(data = county_clust
         , aes(color = clust3_std) 
         , columns = vars_std
         , upper = list(continuous = "blank"))

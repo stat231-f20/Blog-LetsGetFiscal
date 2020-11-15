@@ -382,18 +382,18 @@ state_prop <- clust_3_std %>%
 ```
 
 
-#MAINE: Clustering by Unemployment, Starbucks density, and Income of each county
+#Tennessee: Clustering by Unemployment, Starbucks density, and Income of each county
 
 ```{r}
 
 income_city <- city_income %>%
-  filter(State_Name=="Maine") %>%
+  filter(State_Name=="Tennessee") %>%
   group_by(City) %>%
   na.omit() %>%
   summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
 
 starbucks_city <- starbucks %>%
-  filter(`State/Province`=="ME") %>%
+  filter(`State/Province`=="TN") %>%
   group_by(`City`) %>%
   summarize("Num. Starbucks" = n())
 
@@ -402,7 +402,7 @@ city_info <- income_city %>%
   mutate_all(~replace(., is.na(.), 0))
 
 county_info <- city_income %>%
-  filter(State_ab=="ME") %>%
+  filter(State_ab=="TN") %>%
   select(City, County) %>%
   separate(County, into = c("County", "Blank")
            , sep = "County"
@@ -446,7 +446,7 @@ county_clust <- final_county %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
-                       , region = "maine") %>%
+                       , region = "tennessee") %>%
   select(subregion, long, lat, group)
 
 final_cluster <- county_clust %>%
@@ -455,11 +455,11 @@ final_cluster <- county_clust %>%
 
 ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std)) +
+  geom_polygon(data=final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
-  labs(title = "Clusters in Maine",
-       caption = "*Grey states have no tweet information") +
+  labs(title = "Clusters in Tennessee",
+       caption = "*Grey states have no income or unemployment information") +
   theme_void()
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
@@ -472,6 +472,192 @@ ggpairs(data = county_clust
 #Blue cluster for the win
 
 ```
+
+
+
+
+#Tennessee: Clustering by Unemployment, Starbucks density, and Income of each county
+
+```{r}
+
+income_city <- city_income %>%
+  filter(State_Name=="Tennessee") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+starbucks_city <- starbucks %>%
+  filter(`State/Province`=="TN") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+city_info <- income_city %>%
+  left_join(starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+county_info <- city_income %>%
+  filter(State_ab=="TN") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+unemployment_county <- unemployment %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>%
+  group_by(County) %>%
+  na.omit() %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) 
+
+county_factors <- county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+final_county <- county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+final_county_factors <- final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+county_km <- kmeans(final_county_factors, centers = 3, nstart = 20)
+
+
+# add cluster assignments to the data frame
+county_clust <- final_county %>%
+  mutate(clust3_std = as.character(county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "tennessee") %>%
+  select(subregion, long, lat, group)
+
+final_cluster <- county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in Tennessee",
+       caption = "*Grey states have no income or unemployment information") +
+  theme_void()
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+#Blue cluster for the win
+
+```
+
+
+
+#California: Clustering by Unemployment, Starbucks density, and Income of each county
+
+```{r}
+
+income_city <- city_income %>%
+  filter(State_Name=="California") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+starbucks_city <- starbucks %>%
+  filter(`State/Province`=="CA") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+city_info <- income_city %>%
+  left_join(starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+county_info <- city_income %>%
+  filter(State_ab=="CA") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+unemployment_county <- unemployment %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>%
+  group_by(County) %>%
+  na.omit() %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) 
+
+county_factors <- county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+final_county <- county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+final_county_factors <- final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+county_km <- kmeans(final_county_factors, centers = 3, nstart = 20)
+
+# add cluster assignments to the data frame
+county_clust <- final_county %>%
+  mutate(clust3_std = as.character(county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "california") %>%
+  select(subregion, long, lat, group)
+
+final_cluster <- county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in California",
+       caption = "*Grey states have no income or unemployment information") +
+  theme_void()
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+
+```
+
 
 #State-wide population 
 

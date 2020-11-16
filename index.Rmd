@@ -59,18 +59,6 @@ As such, the astounding popularity of the chain in the country and the prospect 
 
 ```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-#World Map of Starbucks
-worldmap <- getMap(resolution = "coarse")
-plot(worldmap, bg = "white", col = "black")
-points(starbucks$Longitude, starbucks$Latitude, 
-       col = "#006d2c", cex = .01)
-
-```
-
-Text explaining world map
-
-```{r figure2, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
-
 #US locations; except Hawaii and Alaska
 us_stars <- starbucks %>%
   filter(Country=="US") %>%
@@ -98,9 +86,6 @@ us_map_star <- us_stars %>%
 us <- map_data(map = "state"
                        , region = ".") 
 
-usa_states <- map_data(map = "state"
-                       , region = ".")
-
 city_star <- us_map_star %>%
   group_by(City) %>%
   summarize(
@@ -111,22 +96,31 @@ city_count_star <- us_map_star %>%
   left_join(city_star, by = "City") %>%
   mutate(Count = round(Count, 1))
 
-#STARBUCKS LOCATIONS IN THE US
+
 ggplot() +
-  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="gray", alpha=0.3) +
-  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group), color = "#006d2c", alpha = 0.5) +
+  geom_polygon(data = us, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
   theme_void() +
-  scale_size(guide = "none") 
+  labs(color = "Amount of Starbucks in Each City") +
+  scale_size(guide = "none") +
+  theme(legend.title = element_text(color = "black", size = 8),
+        legend.text = element_text(color = "black", size = 8))
+
 
 ```
 
 TEXT EXPLAINING INTRODUCTION VISUAL OF STARBUCKS LOCATIONS
+Text explaining map, transition from current clusters of starbucks to clusters of potential locations.
 
-Maybe include magnitude visualization, explain how it helped our understanding of how current starbucks locations are in clusters 
-
-Process Towards Selecting New Location:
+General Process Towards Selecting New Location:
 1. Find States
 2. Find Counties
+
+# Data
+
+Collected data from 2 Sources: Twitter and Kaggle.....
 
 # Determining States of New Starbucks Locations
 
@@ -408,7 +402,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-# Visualizing clusters
+#### Visualizing clusters
 
 ```{r figure10, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -464,7 +458,7 @@ va_poor_county <- va_county_clust %>%
 ```
 
 
-## Vermont
+### Vermont
 
 Cluster Analysis
 ```{r figure12, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -529,7 +523,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-# Visualizing clusters
+#### Visualizing clusters
 
 ```{r figure13, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -582,7 +576,7 @@ vt_poor_county <- vt_county_clust %>%
 
 ```
 
-## Nevada
+### Nevada
 
 Cluster Analysis
 ```{r figure15, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -648,7 +642,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-# Visualizing clusters
+#### Visualizing clusters
 
 ```{r figure16, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -701,7 +695,7 @@ nv_poor_county <- nv_county_clust %>%
 
 ```
 
-## Wisconsin
+### Wisconsin
 
 Cluster Analysis
 ```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -766,7 +760,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-# Visualizing clusters
+#### Visualizing clusters
 
 ```{r figure19, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -821,7 +815,7 @@ wi_poor_county <- wi_county_clust %>%
 ```
 
 
-## California
+### California
 
 Cluster Analysis
 ```{r figure21, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -886,7 +880,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-# Visualizing clusters
+#### Visualizing clusters
 
 ```{r figure22, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 

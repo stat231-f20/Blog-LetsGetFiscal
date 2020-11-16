@@ -4,6 +4,7 @@ author: "Your Names Here"
 date: "Add a date"
 output:
   rmdformats::readthedown:
+    css: "custom.css"
     thumbnails: false
     highlight: NULL
 ---
@@ -11,56 +12,95 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align="center")
 library(tidyverse)
+library(rvest)
+library(knitr)
+library(janitor)
+library(tidytext)
+library(countrycode)
+library(rworldmap)
+library(viridis)
+library(GGally)
+library(plotly)
+library(dplyr)
+library(stringr)
+library(leaflet)
+library(gganimate)
+library(lubridate)
+library(maps)
+library(ggthemes)
+library(RColorBrewer)
+
+starbucks <- read_csv("Data/starbucks.csv")
+city_income <- read_csv("Data/kaggle_income.csv")
+county_pop <- read_csv("Data/us_county.csv")
+unemployment <- read_csv("Data/unemployment.csv")
+starbucks_positive <- read_csv("Data/starbucks_positive.csv")
+starbucks_negative <- read_csv("Data/starbucks_negative.csv")
 ```
 
 # Introduction
+Starbucks’ gargantuan $26 billion of revenue in 2019 is resounding evidence that Americans, above everything, love their coffee. They prove it time and time again, most recently during the current pandemic: some, unable to relinquish their daily ‘bucks, waited hours on end in long drive-thru lines to get their fix when coffee shops were closed for in-person operations. 
+	
+It is no surprise, then, that Starbucks owns more than 8,000 stores across the US, and continues to grow everyday. These sheer numbers are reflective of a company that is about more than just coffee, having a significant influence on US society and culture with (often controversial) initiatives such as removing religious references from holiday-themed cups. In addition, Starbucks is known for treating their employees extremely well by providing health coverage, tuition coverage, and 401(k) plans, which again reinforces their highly-regarded brand.
 
-## Header 2
+As such, the astounding popularity of the chain in the country and the prospect of further expansion raises important questions. What can the current distribution of Starbucks stores tell us about societal factors across the country? Which factors should the brand consider when expanding into new locations? How can companies like Starbucks, which pride themselves in a positive social and environmental outlook, incorporate such values into their corporate strategy - especially in the current pandemic?
 
-### Header 3
+# Distribution of Starbucks Across the US
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For example, you can include **Bold** and _Italic_ and `Code` text.  For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r figure1, echo = FALSE}
+#US locations; except Hawaii and Alaska
+us_stars <- starbucks %>%
+  filter(Country=="US") %>%
+  rename(State=`State/Province`) %>%
+  filter(State!="AK") %>%
+  filter(State!="HI")
+  
+usa <- map_data(map = "state"
+                       , region = ".")
+usa_states <- usa %>%
+  select(region, group) %>%
+  group_by(region) %>%
+  summarize(
+    group=sum(group)/n()
+  )
 
-You should test out updating your GitHub Pages website:
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.abb
+                         , Region = state.region)
 
-- clone your group's blog project repo in RStudio
-- update "Your Project Title Here" to a new title in the YAML header
-- knit `index.Rmd` 
-- commit and push BOTH the `index.Rmd` and the `index.html` files
-- go to https://stat231-f20.github.io/Blog-LetsGetFiscal/ to see the published test document (this is publicly available!)
+us_map_star <- us_stars %>%
+  left_join(state_info, by = "State") %>%
+  left_join(usa_states, by = c("state_full" = "region"))
 
-## Including code and plots
+us <- map_data(map = "state"
+                       , region = ".") 
 
-You can embed code as normal, for example:
+library(tmap)
 
-```{r cars}
-summary(cars)
-```
+usa_states <- map_data(map = "state"
+                       , region = ".")
 
-Let's clean up the format of that output:
+city_star <- us_map_star %>%
+  group_by(City) %>%
+  summarize(
+    Count = n()
+  )
 
-```{r pretty, echo=FALSE, warning=FALSE, message=FALSE}
-library(kableExtra)
-summary(cars) %>%
-  kable(col.names = c("Speed", "Distance")
-        , row.names = F) %>%
-  kable_styling(bootstrap_options = "striped"
-                , full_width = F) %>%
-  row_spec(0, bold = T, underline = T) %>%
-  column_spec(1:2, width = "1.5in") 
+city_count_star <- us_map_star %>%
+  left_join(city_star, by = "City") %>%
+  mutate(Count = round(Count, 1))
+
+#STARBUCKS LOCATIONS IN THE US
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="gray", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group), color = "#006d2c", alpha = 0.5) +
+  theme_void() +
+  scale_size(guide = "none") 
 ```
 
 In a study from the 1920s, fifty cars were used to see how the speed of the car and the distance taken to stop were related.  Speeds ranged between `r min(cars$speed)` and `r max(cars$speed)` mph.  Distances taken to stop ranged between `r min(cars$dist)` and `r max(cars$dist)` feet, with the middle 50% falling between `r as.numeric(quantile(cars$dist)[2])` and `r as.numeric(quantile(cars$dist)[4])` feet.  
 
 You can also embed plots as normal, for example:
-
-```{r figure1, echo=FALSE}
-ggplot(data = cars, aes(x = speed, y = dist)) + 
-  geom_point() + 
-  labs(x = "Speed of car (mph)"
-       , y = "Distance taken to stop (ft)"
-       , title = "cars data (1920s)")
-```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 

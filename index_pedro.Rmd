@@ -396,7 +396,7 @@ for (i in 1:10){
 }
 
 #Visualizing "Elbow Plot"
-ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+va_cluster_analysis <- ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
   geom_point() + 
   geom_line() +
   scale_x_continuous(breaks=c(1:10)) +
@@ -404,8 +404,6 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 ```
 
-
-#### Visualizing clusters
 
 ```{r figure10, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -427,7 +425,7 @@ va_final_cluster <- va_county_clust %>%
   mutate(County=str_trim(County)) %>%
   left_join(usa_states, by = c("County" = "subregion"))
 
-ggplot() +
+va_geo_plot <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
   geom_polygon(data=va_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
   scale_size_continuous(range=c(1,12)) +
@@ -446,7 +444,7 @@ Cluster characteristics, explain why we chose cluster 4
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
-ggpairs(data = va_county_clust
+va_cluster_descr <- ggpairs(data = va_county_clust
         , aes(color = clust3_std) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
@@ -457,6 +455,21 @@ va_poor_county <- va_county_clust %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(va_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+
+library(ggpubr)
+library(grid)
+library(gridExtra)
+library(GGally)
+
+va_cluster_descr <- grid.grabExpr(print(va_cluster_descr))
+
+#Arranging all three in one plot
+ggarrange(
+  va_geo_plot,                # First row with line plot
+  # Second row with box and dot plots
+  ggarrange(va_cluster_descr, va_cluster_analysis, ncol = 2), 
+  nrow = 2    # Label of the line plot
+ ) 
 
 ```
 

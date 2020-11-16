@@ -110,7 +110,8 @@ city_star <- us_map_star %>%
   )
 
 city_count_star <- us_map_star %>%
-  left_join(city_star, by = "City") 
+  left_join(city_star, by = "City") %>%
+  mutate(Count = round(Count, 1))
 
 
 ggplot() +
@@ -118,7 +119,9 @@ ggplot() +
   geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
-  theme_void() 
+  theme_void() +
+  labs(size = "Amount of Starbucks in Each City") +
+  scale_size(guide = "none")
 
 
 
@@ -209,17 +212,6 @@ starbucks_positive <- tweet_positive %>%
   right_join(usa_states, by = c("state_full" = "region"))
 
 #write_csv(starbucks_positive, "starbucks_positive.csv")
-
-#Plotting positive across US
-ggplot(starbucks_positive, aes(x = long, y = lat, group = group
-                      , fill = positive.proportion)) +
-  scale_fill_viridis() +
-  geom_polygon(color = "white") +
-  theme_void() +
-  coord_fixed(ratio = 1.3) +
-  labs(fill = "Proportion of Positive Words in Tweets Per State",
-       caption = "*Grey states have no tweet information") +
-  theme(legend.position="bottom") 
   
 #Plotting negative across US
 starbucks_negative <- tweet_negative %>%
@@ -235,6 +227,7 @@ starbucks_negative <- tweet_negative %>%
 
 starbucks_negative
 
+#Plotting negative across US
 ggplot(starbucks_negative, aes(x = long, y = lat, group = group
                       , fill = negative.proportion)) +
   scale_fill_viridis() +
@@ -242,10 +235,17 @@ ggplot(starbucks_negative, aes(x = long, y = lat, group = group
   theme_void() +
   coord_fixed(ratio = 1.3) +
   labs(fill = "Proportion of Negative Words in Tweets Per State",
-       caption = "*Grey states have no tweet information") +
-  theme(legend.position="bottom") 
-  
+       caption = "*Grey states have no tweet information")
 
+#Plotting positive across US
+ggplot(starbucks_positive, aes(x = long, y = lat, group = group
+                      , fill = positive.proportion)) +
+  scale_fill_viridis() +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Proportion of Positive Words in Tweets Per State",
+       caption = "*Grey states have no tweet information")
 
 
 
@@ -320,9 +320,27 @@ not_std <- final_state_factors %>%
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
-km_out_std <- kmeans(final_final_state_factors, centers = 3, nstart = 20)
+km_out_std <- kmeans(final_final_state_factors, centers = 5, nstart = 20)
 
 km_not_std <- kmeans(not_std, centers = 3, nstart = 20)
+
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(final_final_state_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
 
 
 # add cluster assignments to the data frame
@@ -343,8 +361,9 @@ usa_states <- map_data(map = "state"
 final_cluster <- clust_3_std %>%
   left_join(usa_states, by = c("State_Name" = "region"))
 
-ggplot(final_cluster, aes(x = long, y = lat, group = group
-                      , fill = clust3_std)) +
+ggplot() +
+geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+geom_polygon(data=final_cluster, aes(x = long, y = lat, group = group, fill = clust3_std), color="black") +
   geom_polygon(color = "black") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
@@ -436,8 +455,24 @@ tn_final_county_factors <- tn_final_county %>%
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
-tn_county_km <- kmeans(tn_final_county_factors, centers = 3, nstart = 20)
+tn_county_km <- kmeans(tn_final_county_factors, centers = 4, nstart = 20)
 
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(tn_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
 
 # add cluster assignments to the data frame
 tn_county_clust <- tn_final_county %>%
@@ -471,7 +506,7 @@ ggpairs(data = tn_county_clust
         , upper = list(continuous = "blank"))
 
 tn_poor_county <- tn_county_clust %>%
-  filter(clust3_std==2) %>%
+  filter(clust3_std==4) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(tn_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -529,8 +564,24 @@ co_final_county_factors <- co_final_county %>%
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
-co_county_km <- kmeans(co_final_county_factors, centers = 3, nstart = 20)
+co_county_km <- kmeans(co_final_county_factors, centers = 5, nstart = 20)
 
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(co_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
 
 # add cluster assignments to the data frame
 co_county_clust <- co_final_county %>%
@@ -563,7 +614,7 @@ ggpairs(data = co_county_clust
         , upper = list(continuous = "blank"))
 
 co_poor_county <- co_county_clust %>%
-  filter(clust3_std==3) %>%
+  filter(clust3_std==4) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(co_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -620,7 +671,25 @@ ca_final_county_factors <- ca_final_county %>%
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
-ca_county_km <- kmeans(ca_final_county_factors, centers = 3, nstart = 20)
+ca_county_km <- kmeans(ca_final_county_factors, centers = 4, nstart = 20)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(ca_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
 
 # add cluster assignments to the data frame
 ca_county_clust <- ca_final_county %>%
@@ -656,7 +725,7 @@ ggpairs(data = ca_county_clust
 library(stringr)
 
 ca_poor_county <- ca_county_clust %>%
-  filter(clust3_std==3) %>%
+  filter(clust3_std==1) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(ca_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)

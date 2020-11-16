@@ -67,9 +67,9 @@ points(starbucks$Longitude, starbucks$Latitude,
 
 ```
 
-*Text explaining world map
+Text explaining world map
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure2, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 #US locations; except Hawaii and Alaska
 us_stars <- starbucks %>%
@@ -120,9 +120,9 @@ ggplot() +
 
 ```
 
-*TEXT EXPLAINING INTRODUCTION VISUAL OF STARBUCKS LOCATIONS
+TEXT EXPLAINING INTRODUCTION VISUAL OF STARBUCKS LOCATIONS
 
-*Maybe include magnitude visualization, explain how it helped our understanding of how current starbucks locations are in clusters 
+Maybe include magnitude visualization, explain how it helped our understanding of how current starbucks locations are in clusters 
 
 Process Towards Selecting New Location:
 1. Find States
@@ -130,7 +130,7 @@ Process Towards Selecting New Location:
 
 #Determining States of New Starbucks Locations
 
-*Paragraph about how we went about determining clusters of states, and explaining why we want to use clusters and explaining factors we use
+Paragraph about how we went about determining clusters of states, and explaining why we want to use clusters and explaining factors we use
 
 ## State-Level Factors
 
@@ -141,10 +141,10 @@ Process Towards Selecting New Location:
 
 ##Cosumer Sentiments Across US
 
-*Explain how we collected data through twitter and used colleciton of words to find proportion of positive and negative words of tweets containing the word "starbucks" and had a geo-location, used 18,000 tweets.
+Explain how we collected data through twitter and used colleciton of words to find proportion of positive and negative words of tweets containing the word "starbucks" and had a geo-location, used 18,000 tweets.
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure3, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(starbucks_positive, aes(x = long, y = lat, group = group
                       , fill = positive.proportion)) +
@@ -160,7 +160,7 @@ ggplot(starbucks_positive, aes(x = long, y = lat, group = group
 ```
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure4, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 ggplot(starbucks_negative, aes(x = long, y = lat, group = group
                       , fill = negative.proportion)) +
@@ -177,15 +177,15 @@ ggplot(starbucks_negative, aes(x = long, y = lat, group = group
 
 ##Income and Unemployment Data
 
-*Explain data came from a kaggle and a county level, which we summarized into states
+Explain data came from a kaggle and a county level, which we summarized into states
 
 
 ##State-Level Clusters
 
-*Explain cluster analysis and elbow plot helped to determine 5 clusters were needed
+Explain cluster analysis and elbow plot helped to determine 5 clusters were needed
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure5, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 income_state <- city_income %>%
   group_by(State_Name, State_ab) %>%
@@ -216,7 +216,6 @@ star_neg <- starbucks_negative %>%
 state_factors <- income_state %>%
   left_join(unemployment_state, by="State") %>%
   left_join(star_neg, by = c("State"="state_full")) %>%
-  left_join(star_pos, by = c("State"="state_full")) %>%
   left_join(starbucks_state, by = c("State_ab" = "State/Province"))
 
 state_factors$`Avg. Unemployment Rate`[10] <- 7.6
@@ -251,10 +250,10 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 ###Visualization of Cluster
-*So we chose 5 clusters based on this plot, and the 5 clusters are shown on this visualization:
+So we chose 5 clusters based on this plot, and the 5 clusters are shown on this visualization:
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure6, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 km_out_std <- kmeans(only_std_values, centers = 5, nstart = 20)
 
@@ -281,9 +280,9 @@ geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = c
 ```
 
 ###Cluster Characteristics
-*Explain we can see characteristics of each cluster through this matrix. Explain each cluster's unique properties
+Explain we can see characteristics of each cluster through this matrix. Explain each cluster's unique properties
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure7, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vars_std = c("Avg. Unemployment Rate_std", "Avg. Income_std", "negative.proportion_std", "Num. Starbucks_std")
 
@@ -297,10 +296,10 @@ ggpairs(data = final_cluster
 
 ##Final List of States
 
-*Then, we calculated the center within each center, finding the states within each cluster that best represented each cluster by finding the state with the miminal distance between each characterstic's value and itself. From this analysis we concluded the final 5 states, each representative of their own cluster, are: 
+Then, we calculated the center within each center, finding the states within each cluster that best represented each cluster by finding the state with the miminal distance between each characterstic's value and itself. From this analysis we concluded the final 5 states, each representative of their own cluster, are: 
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure8, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 #Code we used for each cluster to determine its' representative state
 clust_1 <- final_state_factors %>%
@@ -347,7 +346,7 @@ Step-by Step Process
 ###Virginia
 
 Cluster Analysis
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 va_income_city <- city_income %>%
   filter(State_Name=="Virginia") %>%
@@ -411,7 +410,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 #Visualizing clusters
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure10, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -446,7 +445,7 @@ ggplot() +
 
 Cluster characteristics, explain why we chose cluster 4
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure11, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
@@ -468,7 +467,7 @@ va_poor_county <- va_county_clust %>%
 ##Vermont
 
 Cluster Analysis
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure12, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vt_income_city <- city_income %>%
   filter(State_Name=="Vermont") %>%
@@ -532,7 +531,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 #Visualizing clusters
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure13, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -566,7 +565,7 @@ ggplot() +
 
 Cluster characteristics, explain why we chose cluster 1
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure14, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
@@ -586,7 +585,7 @@ vt_poor_county <- vt_county_clust %>%
 ##Nevada
 
 Cluster Analysis
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure15, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 nv_income_city <- city_income %>%
   filter(State_Name=="Nevada") %>%
@@ -651,7 +650,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 #Visualizing clusters
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure16, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -684,7 +683,7 @@ ggplot() +
 
 Cluster characteristics, explain why we chose cluster 4
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
@@ -705,7 +704,7 @@ nv_poor_county <- nv_county_clust %>%
 ##Wisconsin
 
 Cluster Analysis
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 wi_income_city <- city_income %>%
   filter(State_Name=="Wisconsin") %>%
@@ -769,7 +768,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 #Visualizing clusters
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure19, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -803,7 +802,7 @@ ggplot() +
 
 Cluster characteristics, explain why we chose cluster 5
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure20, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
@@ -825,7 +824,7 @@ wi_poor_county <- wi_county_clust %>%
 ##California
 
 Cluster Analysis
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure21, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 ca_income_city <- city_income %>%
   filter(State_Name=="California") %>%
@@ -889,7 +888,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 #Visualizing clusters
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure22, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
 set.seed(75)
@@ -924,7 +923,7 @@ ggplot() +
 
 Cluster characteristics, explain why we chose cluster 1
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure23, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
@@ -946,7 +945,7 @@ ca_poor_county <- ca_county_clust %>%
 Summarize overall process and thinking and impact of starbucks. Show the data table of all important counties from clusters we chose:
 
 
-```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure24, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 final_counties <- ca_poor_county %>%
   bind_rows(nv_poor_county) %>%
@@ -958,7 +957,6 @@ final_counties <- ca_poor_county %>%
 final_counties
 
 ```
-
 
 
 

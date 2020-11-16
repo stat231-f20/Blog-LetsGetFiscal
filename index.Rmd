@@ -128,7 +128,7 @@ Process Towards Selecting New Location:
 1. Find States
 2. Find Counties
 
-#Determining States of New Starbucks Locations
+# Determining States of New Starbucks Locations
 
 Paragraph about how we went about determining clusters of states, and explaining why we want to use clusters and explaining factors we use
 
@@ -139,7 +139,7 @@ Paragraph about how we went about determining clusters of states, and explaining
 - Average Unemployment Rate
 - Number of Starbucks
 
-##Cosumer Sentiments Across US
+## Cosumer Sentiments Across US
 
 Explain how we collected data through twitter and used colleciton of words to find proportion of positive and negative words of tweets containing the word "starbucks" and had a geo-location, used 18,000 tweets.
 
@@ -175,12 +175,12 @@ ggplot(starbucks_negative, aes(x = long, y = lat, group = group
 
 ```
 
-##Income and Unemployment Data
+## Income and Unemployment Data
 
 Explain data came from a kaggle and a county level, which we summarized into states
 
 
-##State-Level Clusters
+## State-Level Clusters
 
 Explain cluster analysis and elbow plot helped to determine 5 clusters were needed
 
@@ -249,7 +249,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 ```
 
-###Visualization of Cluster
+### Visualization of Cluster
 So we chose 5 clusters based on this plot, and the 5 clusters are shown on this visualization:
 
 
@@ -279,7 +279,7 @@ geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = c
 
 ```
 
-###Cluster Characteristics
+### Cluster Characteristics
 Explain we can see characteristics of each cluster through this matrix. Explain each cluster's unique properties
 
 ```{r figure7, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -294,7 +294,7 @@ ggpairs(data = final_cluster
 
 ```
 
-##Final List of States
+## Final List of States
 
 Then, we calculated the center within each center, finding the states within each cluster that best represented each cluster by finding the state with the miminal distance between each characterstic's value and itself. From this analysis we concluded the final 5 states, each representative of their own cluster, are: 
 
@@ -329,7 +329,7 @@ clust_1 <- clust_1 %>%
 
 # Determining Counties of New Starbucks Locations
 
-##County-Level Factors
+## County-Level Factors
 
 - Average Income
 - Average Unemployment Rate
@@ -341,9 +341,9 @@ Step-by Step Process
 2. Creating clusters based on appropriate number of centers
 3. Determine the most suitable cluster of counties
 
-##Clustering at a County Level For Each Selected State
+## Clustering at a County Level For Each Selected State
 
-###Virginia
+### Virginia
 
 Cluster Analysis
 ```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -408,7 +408,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-#Visualizing clusters
+# Visualizing clusters
 
 ```{r figure10, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -464,7 +464,7 @@ va_poor_county <- va_county_clust %>%
 ```
 
 
-##Vermont
+## Vermont
 
 Cluster Analysis
 ```{r figure12, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -529,7 +529,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-#Visualizing clusters
+# Visualizing clusters
 
 ```{r figure13, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -582,7 +582,7 @@ vt_poor_county <- vt_county_clust %>%
 
 ```
 
-##Nevada
+## Nevada
 
 Cluster Analysis
 ```{r figure15, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -648,7 +648,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-#Visualizing clusters
+# Visualizing clusters
 
 ```{r figure16, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -701,7 +701,7 @@ nv_poor_county <- nv_county_clust %>%
 
 ```
 
-##Wisconsin
+## Wisconsin
 
 Cluster Analysis
 ```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -766,7 +766,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-#Visualizing clusters
+# Visualizing clusters
 
 ```{r figure19, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -821,7 +821,7 @@ wi_poor_county <- wi_county_clust %>%
 ```
 
 
-##California
+## California
 
 Cluster Analysis
 ```{r figure21, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -886,7 +886,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 
-#Visualizing clusters
+# Visualizing clusters
 
 ```{r figure22, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -940,7 +940,7 @@ ca_poor_county <- ca_county_clust %>%
 ```
 
 
-#Final Recommendations
+# Final Recommendations
 
 Summarize overall process and thinking and impact of starbucks. Show the data table of all important counties from clusters we chose:
 

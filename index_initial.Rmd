@@ -1,0 +1,158 @@
+---
+title: "Correia Consultant Agency"
+author: "Your Names Here"
+date: "Add a date"
+output:
+  rmdformats::readthedown:
+    thumbnails: false
+    highlight: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+library(tidyverse)
+library(rvest)
+library(knitr)
+library(janitor)
+library(tidytext)
+library(countrycode)
+library(rworldmap)
+library(viridis)
+library(GGally)
+library(plotly)
+library(dplyr)
+library(stringr)
+library(leaflet)
+library(gganimate)
+library(lubridate)
+library(maps)
+library(ggthemes)
+library(RColorBrewer)
+
+starbucks <- read_csv("Data/starbucks.csv")
+city_income <- read_csv("Data/kaggle_income.csv")
+county_pop <- read_csv("Data/us_county.csv")
+unemployment <- read_csv("Data/unemployment.csv")
+starbucks_positive <- read_csv("Data/starbucks_positive.csv")
+starbucks_negative <- read_csv("Data/starbucks_negative.csv")
+```
+
+# Introduction
+
+## Header 2
+
+### Header 3
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For example, you can include **Bold** and _Italic_ and `Code` text.  For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+You should test out updating your GitHub Pages website:
+
+- clone your group's blog project repo in RStudio
+- update "Your Project Title Here" to a new title in the YAML header
+- knit `index.Rmd` 
+- commit and push BOTH the `index.Rmd` and the `index.html` files
+- go to https://stat231-f20.github.io/Blog-LetsGetFiscal/ to see the published test document (this is publicly available!)
+
+## Including code and plots
+
+You can embed code as normal, for example:
+
+```{r cars}
+summary(cars)
+```
+
+Let's clean up the format of that output:
+
+```{r pretty, echo=FALSE, warning=FALSE, message=FALSE}
+library(kableExtra)
+summary(cars) %>%
+  kable(col.names = c("Speed", "Distance")
+        , row.names = F) %>%
+  kable_styling(bootstrap_options = "striped"
+                , full_width = F) %>%
+  row_spec(0, bold = T, underline = T) %>%
+  column_spec(1:2, width = "1.5in") 
+```
+
+In a study from the 1920s, fifty cars were used to see how the speed of the car and the distance taken to stop were related.  Speeds ranged between `r min(cars$speed)` and `r max(cars$speed)` mph.  Distances taken to stop ranged between `r min(cars$dist)` and `r max(cars$dist)` feet, with the middle 50% falling between `r as.numeric(quantile(cars$dist)[2])` and `r as.numeric(quantile(cars$dist)[4])` feet.  
+
+You can also embed plots as normal, for example:
+
+```{r figure1, echo=FALSE}
+#US locations; except Hawaii and Alaska
+us_stars <- starbucks %>%
+  filter(Country=="US") %>%
+  rename(State=`State/Province`) %>%
+  filter(State!="AK") %>%
+  filter(State!="HI")
+  
+usa <- map_data(map = "state"
+                       , region = ".")
+usa_states <- usa %>%
+  select(region, group) %>%
+  group_by(region) %>%
+  summarize(
+    group=sum(group)/n()
+  )
+
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.abb
+                         , Region = state.region)
+
+us_map_star <- us_stars %>%
+  left_join(state_info, by = "State") %>%
+  left_join(usa_states, by = c("state_full" = "region"))
+
+us <- map_data(map = "state"
+                       , region = ".") 
+
+library(tmap)
+
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+city_star <- us_map_star %>%
+  group_by(City) %>%
+  summarize(
+    Count = n()
+  )
+
+city_count_star <- us_map_star %>%
+  left_join(city_star, by = "City") %>%
+  mutate(Count = round(Count, 1))
+
+#STARBUCKS LOCATIONS IN THE US
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="gray", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group), color = "#006d2c", alpha = 0.5) +
+  theme_void() +
+  scale_size(guide = "none") 
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+## Including links and images
+
+You can include [Links](https://www.datadreaming.org/post/r-markdown-theme-gallery/) and images ![team logo](https://raw.githubusercontent.com/stat231-f20/Blog-LetsGetFiscal/main/images/finance1-2.png)
+
+
+# You can even create tabs if you want! {.tabset .tabset-fade .tabset-pills}
+
+## Bulleted list
+
+You can make a bulleted list like this:
+
+- item 1
+- item 2
+- item 3
+
+
+## Numbered list
+
+You can make a numbered list like this
+
+1. First thing I want to say
+2. Second thing I want to say
+3. Third thing I want to say
+

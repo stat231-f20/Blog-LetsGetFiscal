@@ -1055,4 +1055,12 @@ A final limitation of our analysis is that, ultimately, we have simply theorized
 
 # Citations
 
-List of important packages/data sets
+Golden Oak Research Group. (2017, August). US Household Income Statistics, Version 8. Retrieved November 10, 2020 from https://www.kaggle.com/goldenoakresearch/us-household-income-stats-geo-locations.
+
+Kearney, M. W. (2019). rtweet: Collecting and analyzing Twitter data,
+Journal of Open Source Software, 4, 42. 1829. doi:10.21105/joss.01829 (R
+package version 0.7.0)
+
+Ravaliya, J. (2017, March). US Unemployment Rate by County, 1990-2016, Version 2. Retrieved November 10, 2020 from https://www.kaggle.com/jayrav13/unemployment-by-county-us.
+
+Starbucks. (2017, February). Starbucks Locations Worldwide, Version 1. Retrieved November 10, 2020 from https://www.kaggle.com/starbucks/store-locations.

@@ -291,7 +291,8 @@ geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = c
   geom_polygon(color = "black") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
-  labs(fill = "Clusters") +
+  labs(fill = "Clusters", 
+       caption = "*Grey states have no income or unemployment data") +
   theme(legend.position="bottom")
 
 ```
@@ -457,7 +458,7 @@ va_geo <- ggplot() +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Virginia",
-       caption = "*Grey states have no income or unemployment information",
+       caption = "*Grey counties have no income or unemployment information",
        fill="Clusters") +
   theme_void()
 
@@ -587,7 +588,7 @@ vt_geo <- ggplot() +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Vermont",
-       caption = "*Grey states have no income or unemployment information",
+       caption = "*Grey counties have no income or unemployment information",
        fill="Clusters") +
   theme_void()
 
@@ -718,7 +719,7 @@ tn_geo <- ggplot() +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Tennessee",
-       caption = "*Grey states have no income or unemployment information") +
+       caption = "*Grey counties have no income or unemployment information") +
   theme_void()
 
 ```
@@ -847,7 +848,7 @@ ia_geo <- ggplot() +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Iowa",
-       caption = "*Grey states have no income or unemployment information") +
+       caption = "*Grey counties have no income or unemployment information") +
   theme_void()
 
 
@@ -977,7 +978,7 @@ ca_geo <- ggplot() +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in California",
-       caption = "*Grey states have no income or unemployment information") +
+       caption = "*Grey counties have no income or unemployment information") +
   theme_void()
 
 
@@ -1017,8 +1018,7 @@ ca_poor_county <- ca_county_clust %>%
 
 # Final Recommendations
 
-Summarize overall process and thinking and impact of starbucks. Show the data table of all important counties from clusters we chose:
-
+After selecting the specific counties of the desired clusters from each state, we have computed a data table that shows the household mean income, unemployment rate, and number of Starbucks of each county. We hope this condensed list of counties will provide Starbucks with our rationale and context for our findings. 
 
 ```{r figure24, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 

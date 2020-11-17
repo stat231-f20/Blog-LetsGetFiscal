@@ -76,6 +76,8 @@ In order to conduct this analysis, we collected the following data:
 - The [US Unemployment Rate by County](https://www.kaggle.com/jayrav13/unemployment-by-county-us/data) dataset avaiable on Kaggle and provided by the US Department of Labor's Bureau of Labor Statistics, containing unemployment and population data at the US county level from 1990-2016.
 - The most recent 18,000 tweets containing the string "Starbucks" or "starbucks" in their text, scraped using the [RTweet](https://cran.r-project.org/web/packages/rtweet/rtweet.pdf) package to interface with the Twitter API.
 
+To clarify, when conducting analysis on a state-level, we summarized the information collected on a county-level to reflect the county's respective state. In addition, a specific factor repeatedly used in our analysis is Income. Income, in this case, represents the mean income of a resident for each county, and when used on a state-level, represents the average income of a resident for each state.
+
 Check the links in the bullets above for access to each of the data sources!
 
 # Distribution of Starbucks Across the US
@@ -193,14 +195,14 @@ Motivated by the potential that Starbucks might want to expand into areas it has
 
 We thus employed a k-means clustering algorithm to US States, using the following variables in order to categorize them:
 
-- Average Proportion of Negative Sentiment in Tweets
-- Average Income
-- Average Unemployment Rate
-- Number of Starbucks
+- Average Proportion of Negative Sentiment in Tweets per State
+- Average Income of Each Resident per State
+- Average Unemployment Rate per State
+- Number of Starbucks per State
 
 ## State-Level Clusters
 
-Using the elbow plot below, we found that 5 clusters would get us the most efficient information gain while keeping results interpretable.
+The total within-cluster sum of squares (tot.withinss) is the metric that can be used to judge the number of clusters, or K, required. So we can repeat the analysis with different cluster values and keep noting the tot.withinss values to assess which number of clusters is best. This information is displayed through the "Elbow Plot". From the cluster analysis below, it seems that 5 clusters result in the most sufficient marginal information gain.
 
 ```{r figure5, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -267,8 +269,6 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 ### Visualization of Cluster
-The results of the clustering algorithm are displayed in the visualization below:
-
 
 ```{r figure6, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -297,7 +297,8 @@ geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = c
 ```
 
 ### Cluster Characteristics
-The matrix below shows the distribution of each cluster among the four categories. Cluster 1, which is composed solely of California, is characterized by having the highest number of Starbucks stores by a large margin (a total of 2821!). It’s also interesting to note that California has high average income and a high unemployment rate, which is unique since there is an inverse correlation between the two in other states. Cluster 2 represents the states with lower income than most but also relatively low unemployment, being a special case of the less-wealthy states.  Cluster 3, composed solely of Vermont, is characterized by having the highest negative consumer sentiment. Cluster 4 represents the most wealthy states in the country, having high average income and a median unemployment rate. Finally, Cluster 5 represents the most impoverished states in the US, having a high unemployment rate, low average income and low number of Starbucks stores.
+
+The matrix below shows the distribution of each cluster among the four categories. Cluster 1, which is composed solely of California, is characterized by having the highest number of Starbucks stores by a large margin (a total of 2821!). It’s also interesting to note that California has high average income and a high unemployment rate, which is unique since there is an inverse correlation between the two in other states. Cluster 2 represents the states with lower income than most but also relatively low unemployment, being a special case of the less-wealthy states. Cluster 3, composed solely of Vermont, is characterized by having the highest negative consumer sentiment. Cluster 4 represents the most wealthy states in the country, having high average income and a median unemployment rate. Finally, Cluster 5 represents the most impoverished states in the US, having a high unemployment rate, low average income and low number of Starbucks stores.
 
 ```{r figure7, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -346,22 +347,27 @@ clust_1 <- clust_1 %>%
 
 # Clustering by County
 
-## County-Level Factors
+Expanding on the state-level analysis, we analyzed the potential counties that Starbucks might want to expand into using the same factors as we did for the states, except for consumer sentiments. This allows our analysis to be consistent as the county-level analysis will follow the same analysis and be assessed by the same factors in hopes Starbucks may strategize their next location differently. There was a three-step approach when collecting data to form clusters within each state:
 
-- Average Income
-- Average Unemployment Rate
-- Number of Starbucks
-
-Step-by Step Process
-
-1. Cluster Analysis
+1. Cluster analysis
 2. Creating clusters based on appropriate number of centers
 3. Determine the most suitable cluster of counties
 
+After observing the "elbow plot," the subsequent number of centers chosen leads to a geographical visualization and cluster matrix for that state. Then, after analuzing the three county-level factors, we choose the one cluster of counties that will best support an even better Starbuck's brand and community.
+
+## County-Level Factors
+
+We again employed a k-means clustering algorithm but now to US counties, specifically in the "center" states from our previous findings. For our clusters, the following variables were utilized to categorize them:
+
+- Mean Income of Each Resident per County
+- Unemployment Rate per County
+- Number of Starbucks per County
+
 ## Determining Amount of Clusters for Each State {.tabset .tabset-fade .tabset-pills}
 
-
 ### Virginia
+
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Virginia, the state was divided into 5 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 4 are best. The counties in Cluster 4 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 4 will provide more job opportunties and support for a community that, according to the factors selected, need it.
 
 ```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -489,12 +495,10 @@ va_poor_county <- va_county_clust %>%
 
 ```
 
-Cluster characteristics, explain why we chose cluster 4
-
-
 ### Vermont
 
-Cluster Analysis
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Vermont, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 4 are best. The counties in Cluster 4 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 4 will provide more job opportunties and support for a community that, according to the factors selected, need it.
+
 ```{r figure12, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 vt_income_city <- city_income %>%
@@ -589,8 +593,6 @@ vt_geo <- ggplot() +
 
 ```
 
-Cluster characteristics, explain why we chose cluster 1
-
 ```{r figure14, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 rename_vt_county_clust <- vt_county_clust %>%
@@ -616,7 +618,7 @@ ggarrange(
   )
 
 vt_poor_county <- vt_county_clust %>%
-  filter(Cluster==1) %>%
+  filter(Cluster==4) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(vt_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -625,7 +627,9 @@ vt_poor_county <- vt_county_clust %>%
 
 ### Tennessee
 
-Cluster Analysis
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Tennessee, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 2 are best. The counties in Cluster 2 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 2 will provide more job opportunties and support for a community that, according to the factors selected, need it.
+
+
 ```{r figure15, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 tn_income_city <- city_income %>%
@@ -688,9 +692,6 @@ tn_cluster_analysis <- ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 ```
 
-
-#### Visualizing clusters
-
 ```{r figure16, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
@@ -721,8 +722,6 @@ tn_geo <- ggplot() +
   theme_void()
 
 ```
-
-Cluster characteristics, explain why we chose cluster 4
 
 ```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE, width=20, height=20}
 
@@ -758,7 +757,9 @@ tn_poor_county <- tn_county_clust %>%
 
 ### Iowa
 
-Cluster Analysis
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Iowa, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 3 are best. While the counties in Cluster 3 have an average household mean income, the counties do have the highest unemployment rates relative to the other clusters and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 3 will provide more job opportunties and support for a community that, according to the factors selected, need it due to the relatively low unemployment rate.
+
+
 ```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 ia_income_city <- city_income %>%
@@ -820,9 +821,6 @@ ia_cluster_analysis <- ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 ```
 
-
-#### Visualizing clusters
-
 ```{r figure19, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
@@ -854,8 +852,6 @@ ia_geo <- ggplot() +
 
 
 ```
-
-Cluster characteristics, explain why we chose cluster 5
 
 ```{r figure20, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -892,7 +888,8 @@ ia_poor_county <- ia_county_clust %>%
 
 ### California
 
-Cluster Analysis
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of California, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 1 are best. The counties in Cluster 1 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 1 will provide more job opportunties and support for a community that, according to the factors selected, need it.
+
 ```{r figure21, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 ca_income_city <- city_income %>%
@@ -954,9 +951,6 @@ ca_cluster_analysis <- ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 
 ```
 
-
-#### Visualizing clusters
-
 ```{r figure22, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 # apply the k-means algorithm (set the seed to make the results reproducible)
@@ -989,8 +983,6 @@ ca_geo <- ggplot() +
 
 
 ```
-
-Cluster characteristics, explain why we chose cluster 1
 
 ```{r figure23, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 

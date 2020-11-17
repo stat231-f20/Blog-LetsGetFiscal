@@ -1038,9 +1038,19 @@ kable(final_counties) %>%
 ```
 
 
-# Limitations and Conclusion
+# Conclusion and Limitations
 
-Paragraph here
+The crux of this project is not only these final recommendations for new locations in which to expand, but what we learned in the process of getting to these. Firstly, it is evident from an analysis of spatial distribution of Starbucks stores in the US that these stores are heavily concentrated in populated, rich, urban centers. Furthermore, it is likely that this extends to other restaurants and even different types of brands. Ultimately, this is a testament to how the process of urbanization in the US is characterized by the formation of cities as centers of not only production, but consumption. One cannot blame Starbucks for “following the money”, but this raises questions about equity across urban spaces in the US.
+
+Another interesting finding was that there is no positive correlation between the amount of Starbucks stores and positive sentiment towards Starbucks. This ran counter to our initial intuition that Starbucks would concentrate on the places that felt most “positive” towards it. It opens up the exciting possibility that the strategy of doubling down on “cash cow” locations like New York might not be the best strategy for the company, which should instead consider the possibility of expanding into locations with positive sentiment in order to bolster its brand image. More broadly, this raises the question of the extent to which companies should trade-off between potential short-term profit and long-term benefits to brand image.
+	
+Our most important finding and point that we wish to make is that companies like Starbucks can play a role in improving social conditions across the country, even though these large corporations are often vilified for their greed. A social-minded approach towards expansions as the one we have shown above combined with effective company policies such as extensive health and tuition coverage can do wonders to the most underprivileged counties in the US, providing employment and growth opportunities for youth. Moving forward, we hope to see companies take a more active role in being mindful about the impact they can have in society, be that positive or negative.
+
+With the takeaways in mind, it is important to consider some of the main limitations of our analysis. An extremely relevant limitation is that we had a limited amount of data to work with and only used a handful of variables in our analysis. Possible data-related extensions we considered include using factors such as Starbucks revenue by state or county, population density, and state-level measures of education and health. We would love to see extensions of this project that take these other facets of society into account, or perhaps apply them to other brands.
+	
+Another strong limitation of our analysis is that our scraping of tweets is limited to the past 7 days, as gathering more data required the use of a paid API key. This allowed us to gather a snapshot of time, but we believe it is present-biased by momentary whims and are not confident that it is representative of overall sentiment towards Starbucks in each state. A further limitation in this regard is that Twitter users do not need to and often choose not to specify where they live, leading to an overall small amount of usable data. An extension incorporating tweets over a longer period of time would lead to more robust data that is likely more sentiment of overall consumer sentiment towards Starbucks in each state. 
+	
+A final limitation of our analysis is that, ultimately, we have simply theorized what Starbucks “might” act like if it took on a socially-minded approach to growth, but we haven’t identified any incentives for the company to follow through on this type of behavior. Ultimately, building stores in the counties we recommend would likely lead to lower profits than the company would otherwise achieve. Subsequent studies that incorporate a profitability analysis could hopefully shine light on the ways in which being socially-minded is not only beneficial to society, but also has the potential to improve company profitability.
 
 
 # Citations

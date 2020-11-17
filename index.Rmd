@@ -1,7 +1,7 @@
 ---
 title: "Correia Consultant Agency"
 author: "Pedro Morais, Braedon Fiume, Matt Adams"
-date: "Add a date"
+date: "November 17, 2020"
 output:
   rmdformats::readthedown:
     css: "custom.css"

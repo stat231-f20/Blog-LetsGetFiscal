@@ -466,8 +466,6 @@ rename_va_county_clust <- va_county_clust %>%
   
 vars_std = c("Income", "Num. Starbucks", "Unemployment")
 
-va_geo <- ggplotGrob(va_geo)
-
 va_cluster_matrix <- ggpairs(data = rename_va_county_clust
         , aes(color = Cluster) 
         , columns = vars_std

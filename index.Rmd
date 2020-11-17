@@ -29,6 +29,8 @@ library(lubridate)
 library(maps)
 library(ggthemes)
 library(RColorBrewer)
+library(DT)
+
 
 library(ggpubr)
 library(grid)
@@ -45,6 +47,7 @@ starbucks_negative <- read_csv("Data/starbucks_negative.csv")
 
 #Standard unemployment data used for each county
 unemployment_county <- unemployment %>%
+  filter(Year==2016) %>%
   separate(County, into = c("County", "Blank")
            , sep = "County"
            , remove = FALSE) %>%
@@ -200,6 +203,8 @@ We thus employed a k-means clustering algorithm to US States, using the followin
 - Average Unemployment Rate per State
 - Number of Starbucks per State
 
+It is important to note that these factors have significantly different scales. Thus, we incorporated standardized values into our cluster analysis so that the clustering algorithm weights all variables equally. 
+
 ## State-Level Clusters
 
 The total within-cluster sum of squares (tot.withinss) is the metric that can be used to judge the number of clusters, or K, required. So we can repeat the analysis with different cluster values and keep noting the tot.withinss values to assess which number of clusters is best. This information is displayed through the "Elbow Plot". From the cluster analysis below, it seems that 5 clusters result in the most sufficient marginal information gain.
@@ -214,6 +219,7 @@ income_state <- city_income %>%
   select(State, `Avg. Income`, State_ab)
 
 unemployment_state <- unemployment %>%
+  filter(Year==2016) %>%
   group_by(State) %>%
   na.omit() %>%
   summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
@@ -340,11 +346,11 @@ clust_1 <- clust_1 %>%
 
 ```
 
-- Virginia
-- Vermont
-- Tennessee
-- Iowa
-- California
+- California - Cluster 1
+- Iowa - Cluster 2
+- Vermont - Cluster 3
+- Virginia - Cluster 4
+- Tennessee - Cluster 5
 
 # Clustering by County
 
@@ -368,7 +374,7 @@ We again employed a k-means clustering algorithm but now to US counties, specifi
 
 ### Virginia
 
-Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Virginia, the state was divided into 5 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 4 are best. The counties in Cluster 4 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 4 will provide more job opportunties and support for a community that, according to the factors selected, need it.
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Virginia, the state was divided into 5 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 1 are best. The counties in Cluster 1 have the lowest household mean income and highest unemployment rates relative to the other clusters, and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 1 will provide more job opportunties and support for a community that, according to the factors selected, need it.
 
 ```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -489,7 +495,7 @@ ggarrange(
 
 #Compile for the end result
 va_poor_county <- va_county_clust %>%
-  filter(Cluster==4) %>%
+  filter(Cluster==1) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(va_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -758,7 +764,7 @@ tn_poor_county <- tn_county_clust %>%
 
 ### Iowa
 
-Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Iowa, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 3 are best. While the counties in Cluster 3 have an average household mean income, the counties do have the highest unemployment rates relative to the other clusters and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 3 will provide more job opportunties and support for a community that, according to the factors selected, need it due to the relatively low unemployment rate.
+Based on the cluster analysis, the total within-cluster sum of squares seems to significantly diminish after 5 clusters. Therefore, in our evaluation of Iowa, the state was divided into 4 clusters. To best contribute to a more socially-minded Starbucks, we believe the counties a part of Cluster 4 are best. While the counties in Cluster 4 have an average household mean income, the counties do have the highest unemployment rates relative to the other clusters and also has a low amount of Starbucks stores. Establishing a Starbucks location in one of the counties of Cluster 4 will provide more job opportunties and support for a community that, according to the factors selected, need it due to the relatively low unemployment rate.
 
 
 ```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -877,9 +883,9 @@ ggarrange(
   nrow = 1     # Label of the line plot
   )
 
-#Cluster 3
+#Cluster 2
 ia_poor_county <- ia_county_clust %>%
-  filter(Cluster==3) %>%
+  filter(Cluster==4) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(ia_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -1022,17 +1028,50 @@ After selecting the specific counties of the desired clusters from each state, w
 
 ```{r figure24, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-final_counties <- ca_poor_county %>%
-  bind_rows(ia_poor_county) %>%
-  bind_rows(vt_poor_county) %>%
-  bind_rows(va_poor_county) %>%
-  bind_rows(tn_poor_county) 
+final_ia_poor_county <- ia_poor_county %>%
+  mutate(State="Iowa") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
 
-library(knitr)
-library(kableExtra)
 
-kable(final_counties) %>%
-  kable_styling(latex_options = "striped")
+final_ca_poor_county <- ca_poor_county %>%
+  mutate(State="California") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_va_poor_county <- va_poor_county %>%
+  mutate(State="Virginia") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_vt_poor_county <- vt_poor_county %>%
+  mutate(State="Vermont") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_tn_poor_county <- tn_poor_county %>%
+  mutate(State="Tennessee") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_counties <- final_ca_poor_county %>%
+  bind_rows(final_ia_poor_county) %>%
+  bind_rows(final_vt_poor_county) %>%
+  bind_rows(final_va_poor_county) %>%
+  bind_rows(final_tn_poor_county) 
+
+options(DT.options = list(pageLength = 10))
+datatable(final_counties) %>% 
+  formatStyle(
+  'Num. Starbucks',
+  backgroundColor = styleEqual(c(0), c('yellow'))) %>%
+  formatPercentage(c("Unemployment Rate"), 1) %>%
+  formatCurrency(c('Avg. Income'), "$") 
 
 
 ```

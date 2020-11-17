@@ -61,7 +61,7 @@ It is no surprise, then, that Starbucks owns more than 8,000 stores across the U
 
 As such, the astounding popularity of the chain in the country and the prospect of further expansion raises important questions. What can the current distribution of Starbucks stores tell us about societal factors across the country? Which factors should the brand consider when expanding into new locations? How can companies like Starbucks, which pride themselves in a positive social and environmental outlook, incorporate such values into their corporate strategy - especially in the current pandemic?
 
-#Overview of Analysis
+# Overview of Analysis
 
 In order to answer these questions, we sought to understand the relationship between state-level social and economic factors, such as income and unemployment; and the distribution of Starbucks locations in the US. Furthermore, we wanted to understand what company behavior and decision-making could look like with a more social-minded approach, instead of considering sheer profits. Starbucks shops, after all, can be significant contributors to social good on a localized level by providing stable jobs that open up avenues for growth and education.
 
@@ -155,12 +155,11 @@ Paragraph about how we went about determining clusters of states, and explaining
 
 ## Cosumer Sentiments Across US
 
-Explain how we collected data through twitter and used colleciton of words to find proportion of positive and negative words of tweets containing the word "starbucks" and had a geo-location, used 18,000 tweets.
-
+Before including the consumer sentiments in the clustering analysis, it was important to understand this information independently. Our initial hypothesis was that states with larger densities of starbucks would tweet more positive and less negative opinions. However, when observing the plots below, states with more Starbucks, such as California, Texas, Florida, and New York, all have a lower proportion of positive words in tweets and high proportion of negative words in tweets compared to other states in the US. Additionally, the states with a lower amount of Starbucks, such as Wisconsin, Iowa, Kansas, and Mississippi, had a higher proportion of positive words and lower proportion of negative words in tweets. This leads to the conclusion that it may be more beneficial for Starbucks to build its stores in states it is not currently heavily established in, according to consumer sentiment analysis.
 
 ```{r figure3, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-ggplot(starbucks_positive, aes(x = long, y = lat, group = group
+pos <- ggplot(starbucks_positive, aes(x = long, y = lat, group = group
                       , fill = positive.proportion)) +
   scale_fill_viridis() +
   geom_polygon(color = "white") +
@@ -172,29 +171,23 @@ ggplot(starbucks_positive, aes(x = long, y = lat, group = group
     theme(legend.title = element_text(color = "black", size = 8),
         legend.text = element_text(color = "black", size = 8))
 
-```
-
-
-```{r figure4, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
-
-ggplot(starbucks_negative, aes(x = long, y = lat, group = group
+neg <- ggplot(starbucks_negative, aes(x = long, y = lat, group = group
                       , fill = negative.proportion)) +
   scale_fill_viridis() +
   geom_polygon(color = "white") +
   theme_void() +
   coord_fixed(ratio = 1.3) +
-  labs(title= "Proportion of Positive Words in Tweets Per State",
+  labs(title= "Proportion of Negative Words in Tweets Per State",
        fill = "Proportion",
        caption = "*Grey states have no twitter data") +
     theme(legend.title = element_text(color = "black", size = 8),
         legend.text = element_text(color = "black", size = 8))
 
+consumer_sentiment <- ggarrange(pos, neg, ncol = 1, nrow = 2)
+
+consumer_sentiment
+
 ```
-
-## Income, Unemployment, and Starbucks Data
-
-Explain data came from a kaggle and a county level, which we summarized into states
-
 
 ## State-Level Clusters
 

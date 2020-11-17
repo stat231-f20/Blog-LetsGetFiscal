@@ -1,0 +1,980 @@
+---
+title: "Correia Consultant Agency"
+author: "Pedro Morais, Braedon Fiume, Matt Adams"
+date: "Add a date"
+output:
+  rmdformats::readthedown:
+    css: "custom.css"
+    thumbnails: false
+    highlight: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+library(tidyverse)
+library(rvest)
+library(knitr)
+library(janitor)
+library(tidytext)
+library(countrycode)
+library(rworldmap)
+library(viridis)
+library(GGally)
+library(plotly)
+library(dplyr)
+library(stringr)
+library(leaflet)
+library(gganimate)
+library(lubridate)
+library(maps)
+library(ggthemes)
+library(RColorBrewer)
+
+starbucks <- read_csv("Data/starbucks.csv")
+city_income <- read_csv("Data/kaggle_income.csv")
+county_pop <- read_csv("Data/us_county.csv")
+unemployment <- read_csv("Data/unemployment.csv")
+starbucks_positive <- read_csv("Data/starbucks_positive.csv")
+starbucks_negative <- read_csv("Data/starbucks_negative.csv")
+
+#Standard unemployment data used for each county
+unemployment_county <- unemployment %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>%
+  group_by(County) %>%
+  na.omit() %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) 
+
+```
+
+# Introduction
+Starbucks’ gargantuan $26 billion of revenue in 2019 is resounding evidence that Americans, above everything, love their coffee. They prove it time and time again, most recently during the current pandemic: some, unable to relinquish their daily ‘bucks, waited hours on end in long drive-thru lines to get their fix when coffee shops were closed for in-person operations.
+	
+It is no surprise, then, that Starbucks owns more than 8,000 stores across the US, and continues to grow everyday. These sheer numbers are reflective of a company that is about more than just coffee, having a significant influence on US society and culture with (often controversial) initiatives such as removing religious references from holiday-themed cups. In addition, Starbucks is known for treating their employees extremely well by providing health coverage, tuition coverage, and 401(k) plans, which again reinforces their highly-regarded brand.
+
+As such, the astounding popularity of the chain in the country and the prospect of further expansion raises important questions. What can the current distribution of Starbucks stores tell us about societal factors across the country? Which factors should the brand consider when expanding into new locations? How can companies like Starbucks, which pride themselves in a positive social and environmental outlook, incorporate such values into their corporate strategy - especially in the current pandemic?
+
+#Overview of Analysis
+
+In order to answer these questions, we sought to understand the relationship between state-level social and economic factors, such as income and unemployment; and the distribution of Starbucks locations in the US. Furthermore, we wanted to understand what company behavior and decision-making could look like with a more social-minded approach, instead of considering sheer profits. Starbucks shops, after all, can be significant contributors to social good on a localized level by providing stable jobs that open up avenues for growth and education.
+
+As such, in this project, we conduct a consulting case-study of Starbucks, analysing what insights are gained from the current distribution of stores in the US and providing socially-minded recommendations for new locations in which the brand can expand. We start this endeavor with a spatial analysis of Starbucks stores across the US, exploring the relationship between store density and income/unemployment level in each state. We then complement this analysis with a text-based sentiment analysis of recent tweets mentioning Starbucks, and explore how these sentiments vary across location. Finally, we use these variables to conduct a clustering analysis of states in the US, in order to determine the different “types” of states under which Starbucks operates. We proceed to use these clusters to identify the ideal locations for the brand to build new stores.
+
+# Data
+
+In order to conduct this analysis, we collected the following data:
+
+- The [Starbucks Locations Worldwide](https://www.kaggle.com/starbucks/store-locations) dataset available on Kaggle and provided by Starbucks Corporation, including a record for every Starbucks or subsidiary store location that was operation during February 2017.
+- The [US Household Income Statistics](https://www.kaggle.com/goldenoakresearch/us-household-income-stats-geo-locations?select=kaggle_income.csv) dataset, available on Kaggle and provided by the Golden Oak Research group, containing information on US cities’ average income.
+- The [US Unemployment Rate by County](https://www.kaggle.com/jayrav13/unemployment-by-county-us/data) dataset avaiable on Kaggle and provided by the US Department of Labor's Bureau of Labor Statistics, containing unemployment and population data at the US county level from 1990-2016.
+- The most recent 18,000 tweets containing the string "Starbucks" or "starbucks" in their text, scraped using the [RTweet](https://cran.r-project.org/web/packages/rtweet/rtweet.pdf) package to interface with the Twitter API.
+
+Check the links in the bullets above for access to each of the data sources!
+
+
+# Distribution of Starbucks Across the US
+
+```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+#US locations; except Hawaii and Alaska
+us_stars <- starbucks %>%
+  filter(Country=="US") %>%
+  rename(State=`State/Province`) %>%
+  filter(State!="AK") %>%
+  filter(State!="HI")
+  
+usa <- map_data(map = "state"
+                       , region = ".")
+usa_states <- usa %>%
+  select(region, group) %>%
+  group_by(region) %>%
+  summarize(
+    group=sum(group)/n()
+  )
+
+state_info <- data.frame(state_full = tolower(state.name)
+                         , State = state.abb
+                         , Region = state.region)
+
+us_map_star <- us_stars %>%
+  left_join(state_info, by = "State") %>%
+  left_join(usa_states, by = c("state_full" = "region"))
+
+us <- map_data(map = "state"
+                       , region = ".") 
+
+city_star <- us_map_star %>%
+  group_by(City) %>%
+  summarize(
+    Count = n()
+  )
+
+city_count_star <- us_map_star %>%
+  left_join(city_star, by = "City") %>%
+  mutate(Count = round(Count, 1))
+
+
+ggplot() +
+  geom_polygon(data = us, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  theme_void() +
+  labs(color = "Amount of Starbucks in Each City") +
+  scale_size(guide = "none") +
+  theme(legend.title = element_text(color = "black", size = 8),
+        legend.text = element_text(color = "black", size = 8))
+
+
+```
+
+TEXT EXPLAINING INTRODUCTION VISUAL OF STARBUCKS LOCATIONS
+Text explaining map, transition from current clusters of starbucks to clusters of potential locations.
+
+General Process Towards Selecting New Location:
+1. Find States
+2. Find Counties
+
+# Clustering by State
+
+Paragraph about how we went about determining clusters of states, and explaining why we want to use clusters and explaining factors we use
+
+## State-Level Factors
+
+- Consumer Sentiments
+- Average Income
+- Average Unemployment Rate
+- Number of Starbucks
+
+## Cosumer Sentiments Across US
+
+Explain how we collected data through twitter and used colleciton of words to find proportion of positive and negative words of tweets containing the word "starbucks" and had a geo-location, used 18,000 tweets.
+
+
+```{r figure3, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(starbucks_positive, aes(x = long, y = lat, group = group
+                      , fill = positive.proportion)) +
+  scale_fill_viridis() +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(title= "Proportion of Positive Words in Tweets Per State",
+       fill = "Proportion",
+       caption = "*Grey states have no twitter data") +
+    theme(legend.title = element_text(color = "black", size = 8),
+        legend.text = element_text(color = "black", size = 8))
+
+```
+
+
+```{r figure4, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(starbucks_negative, aes(x = long, y = lat, group = group
+                      , fill = negative.proportion)) +
+  scale_fill_viridis() +
+  geom_polygon(color = "white") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(title= "Proportion of Positive Words in Tweets Per State",
+       fill = "Proportion",
+       caption = "*Grey states have no twitter data") +
+    theme(legend.title = element_text(color = "black", size = 8),
+        legend.text = element_text(color = "black", size = 8))
+
+```
+
+## Income, Unemployment, and Starbucks Data
+
+Explain data came from a kaggle and a county level, which we summarized into states
+
+
+## State-Level Clusters
+
+Explain cluster analysis and elbow plot helped to determine 5 clusters were needed
+
+
+```{r figure5, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+income_state <- city_income %>%
+  group_by(State_Name, State_ab) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) %>%
+  mutate(State = tolower(State_Name)) %>%
+  select(State, `Avg. Income`, State_ab)
+
+unemployment_state <- unemployment %>%
+  group_by(State) %>%
+  na.omit() %>%
+  summarize("Avg. Unemployment Rate" = mean(Rate, na.rm=TRUE)) %>%
+  mutate(State = tolower(State))
+
+starbucks_state <- starbucks %>%
+  group_by(`State/Province`) %>%
+  na.omit() %>%
+  summarize("Num. Starbucks" = n())
+  
+star_neg <- starbucks_negative %>%
+  select(negative.proportion, state_full) %>%
+  group_by(state_full) %>%
+  na.omit() %>%
+  summarize(
+    negative.proportion = mean(negative.proportion, na.rm=TRUE)
+  )
+
+state_factors <- income_state %>%
+  left_join(unemployment_state, by="State") %>%
+  left_join(star_neg, by = c("State"="state_full")) %>%
+  left_join(starbucks_state, by = c("State_ab" = "State/Province"))
+
+state_factors$`Avg. Unemployment Rate`[10] <- 7.6
+
+final_state_factors <- state_factors %>%
+  na.omit() %>%
+  ungroup()
+
+final_final_state_factors <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) 
+
+only_std_values <- final_final_state_factors %>%
+  select(`Avg. Unemployment Rate_std`, `Avg. Income_std`, negative.proportion_std, `Num. Starbucks_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(only_std_values, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]), title="Cluster Analysis")
+
+```
+
+### Visualization of Cluster
+So we chose 5 clusters based on this plot, and the 5 clusters are shown on this visualization:
+
+
+```{r figure6, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+km_out_std <- kmeans(only_std_values, centers = 5, nstart = 20)
+
+clust_5_std <- final_final_state_factors %>%
+  mutate(clust5_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust5_std) %>%
+  mutate(State_Name=tolower(State_Name))
+
+usa_states <- map_data(map = "state"
+                       , region = ".")
+
+final_cluster <- clust_5_std %>%
+  left_join(usa_states, by = c("State_Name" = "region"))
+
+ggplot() +
+geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = clust5_std), color="black") +
+  geom_polygon(color = "black") +
+  theme_void() +
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Clusters") +
+  theme(legend.position="bottom")
+
+```
+
+### Cluster Characteristics
+Explain we can see characteristics of each cluster through this matrix. Explain each cluster's unique properties
+
+```{r figure7, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vars_std = c("Avg. Unemployment Rate_std", "Avg. Income_std", "negative.proportion_std", "Num. Starbucks_std")
+
+ggpairs(data = final_cluster
+        , aes(color = clust5_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank")
+        , title = "Distributions of Clusters") +
+  labs(caption = "*Important to Note: Values are standardized")
+
+```
+
+## Final List of States
+
+Then, we calculated the center within each center, finding the states within each cluster that best represented each cluster by finding the state with the miminal distance between each characterstic's value and itself. From this analysis we concluded the final 5 states, each representative of their own cluster, are: 
+
+
+```{r figure8, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+#Code we used for each cluster to determine its' most representative state
+clust_1 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==1) 
+
+clust_1 <- clust_1 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[1,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[1,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[1,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[1,3])^2)
+  ) %>%
+  arrange(dist)
+
+
+```
+
+- Virginia
+- Vermont
+- Tennessee
+- Iowa
+- California
+
+# Clustering by County
+
+## County-Level Factors
+
+- Average Income
+- Average Unemployment Rate
+- Number of Starbucks
+
+Step-by Step Process
+
+1. Cluster Analysis
+2. Creating clusters based on appropriate number of centers
+3. Determine the most suitable cluster of counties
+
+## Determining Amount of Clusters for Each State {.tabset .tabset-fade .tabset-pills}
+
+### Virginia
+
+Cluster Analysis
+```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+va_income_city <- city_income %>%
+  filter(State_Name=="Virginia") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+va_starbucks_city <- starbucks %>%
+  filter(`State/Province`=="VA") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+va_city_info <- va_income_city %>%
+  left_join(va_starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+va_county_info <- city_income %>%
+  filter(State_ab=="VA") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(va_city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+va_county_factors <- va_county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+va_final_county <- va_county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+va_final_county_factors <- va_final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(va_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
+```
+
+
+#### Visualizing clusters
+
+```{r figure10, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+va_county_km <- kmeans(va_final_county_factors, centers = 5, nstart = 20)
+
+# add cluster assignments to the data frame
+va_county_clust <- va_final_county %>%
+  mutate(clust3_std = as.character(va_county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "virginia") %>%
+  select(subregion, long, lat, group)
+
+va_final_cluster <- va_county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=va_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in Tennessee",
+       caption = "*Grey states have no income or unemployment information",
+       fill="Clusters") +
+  theme_void()
+
+```
+
+
+Cluster characteristics, explain why we chose cluster 4
+
+```{r figure11, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = va_county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+#Compile for the end result
+va_poor_county <- va_county_clust %>%
+  filter(clust3_std==4) %>%
+  mutate(County=str_to_title(County)) %>%
+  inner_join(va_county_factors, by="County") %>%
+  select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+
+```
+
+
+### Vermont
+
+Cluster Analysis
+```{r figure12, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vt_income_city <- city_income %>%
+  filter(State_Name=="Vermont") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+vt_starbucks_city <- starbucks %>%
+  filter(`State/Province`=="VT") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+vt_city_info <- vt_income_city %>%
+  left_join(vt_starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+vt_county_info <- city_income %>%
+  filter(State_ab=="VT") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(vt_city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+vt_county_factors <- vt_county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+vt_final_county <- vt_county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+vt_final_county_factors <- vt_final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=7, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:7){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(vt_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:7)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
+```
+
+
+#### Visualizing clusters
+
+```{r figure13, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+vt_county_km <- kmeans(vt_final_county_factors, centers = 4, nstart = 20)
+
+# add cluster assignments to the data frame
+vt_county_clust <- vt_final_county %>%
+  mutate(clust3_std = as.character(vt_county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "vermont") %>%
+  select(subregion, long, lat, group)
+
+vt_final_cluster <- vt_county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=vt_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in Tennessee",
+       caption = "*Grey states have no income or unemployment information",
+       fill="Clusters") +
+  theme_void()
+
+```
+
+Cluster characteristics, explain why we chose cluster 1
+
+```{r figure14, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = vt_county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+vt_poor_county <- vt_county_clust %>%
+  filter(clust3_std==1) %>%
+  mutate(County=str_to_title(County)) %>%
+  inner_join(vt_county_factors, by="County") %>%
+  select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+
+```
+
+### Nevada
+
+Cluster Analysis
+```{r figure15, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+nv_income_city <- city_income %>%
+  filter(State_Name=="Nevada") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+nv_starbucks_city <- starbucks %>%
+  filter(`State/Province`=="NV") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+nv_city_info <- nv_income_city %>%
+  left_join(nv_starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+nv_county_info <- city_income %>%
+  filter(State_ab=="NV") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(nv_city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+nv_county_factors <- nv_county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+nv_final_county <- nv_county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+nv_final_county_factors <- nv_final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=8, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:8){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(nv_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:8)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
+
+```
+
+
+#### Visualizing clusters
+
+```{r figure16, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+nv_county_km <- kmeans(nv_final_county_factors, centers = 4, nstart = 20)
+
+# add cluster assignments to the data frame
+nv_county_clust <- nv_final_county %>%
+  mutate(clust3_std = as.character(nv_county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "nevada") %>%
+  select(subregion, long, lat, group)
+
+nv_final_cluster <- nv_county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=nv_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in Tennessee",
+       caption = "*Grey states have no income or unemployment information") +
+  theme_void()
+
+```
+
+Cluster characteristics, explain why we chose cluster 4
+
+```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = nv_county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+nv_poor_county <- nv_county_clust %>%
+  filter(clust3_std==4) %>%
+  mutate(County=str_to_title(County)) %>%
+  inner_join(nv_county_factors, by="County") %>%
+  select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+
+```
+
+### Wisconsin
+
+Cluster Analysis
+```{r figure18, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+wi_income_city <- city_income %>%
+  filter(State_Name=="Wisconsin") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+wi_starbucks_city <- starbucks %>%
+  filter(`State/Province`=="WI") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+wi_city_info <- wi_income_city %>%
+  left_join(wi_starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+wi_county_info <- city_income %>%
+  filter(State_ab=="WI") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(wi_city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+wi_county_factors <- wi_county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+wi_final_county <- wi_county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+wi_final_county_factors <- wi_final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(wi_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
+```
+
+
+#### Visualizing clusters
+
+```{r figure19, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+wi_county_km <- kmeans(wi_final_county_factors, centers = 5, nstart = 20)
+
+# add cluster assignments to the data frame
+wi_county_clust <- wi_final_county %>%
+  mutate(clust3_std = as.character(wi_county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "wisconsin") %>%
+  select(subregion, long, lat, group)
+
+wi_final_cluster <- wi_county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=wi_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in California",
+       caption = "*Grey states have no income or unemployment information") +
+  theme_void()
+
+
+```
+
+Cluster characteristics, explain why we chose cluster 5
+
+```{r figure20, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = wi_county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+#Cluster 5
+wi_poor_county <- wi_county_clust %>%
+  filter(clust3_std==5) %>%
+  mutate(County=str_to_title(County)) %>%
+  inner_join(wi_county_factors, by="County") %>%
+  select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+
+```
+
+
+### California
+
+Cluster Analysis
+```{r figure21, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+ca_income_city <- city_income %>%
+  filter(State_Name=="California") %>%
+  group_by(City) %>%
+  na.omit() %>%
+  summarize("Avg. Income" = mean(Mean, na.rm=TRUE)) 
+
+ca_starbucks_city <- starbucks %>%
+  filter(`State/Province`=="CA") %>%
+  group_by(`City`) %>%
+  summarize("Num. Starbucks" = n())
+
+ca_city_info <- ca_income_city %>%
+  left_join(ca_starbucks_city, by = c("City")) %>%
+  mutate_all(~replace(., is.na(.), 0))
+
+ca_county_info <- city_income %>%
+  filter(State_ab=="CA") %>%
+  select(City, County) %>%
+  separate(County, into = c("County", "Blank")
+           , sep = "County"
+           , remove = FALSE) %>% 
+  distinct() %>%
+  left_join(ca_city_info, by = c("City")) %>%
+  group_by(County) %>%
+  summarize(
+    "Avg. Income" = mean(`Avg. Income`), 
+    "Num. Starbucks" = sum(`Num. Starbucks`)
+  )
+
+ca_county_factors <- ca_county_info %>%
+  left_join(unemployment_county, by = c("County")) %>%
+  na.omit()
+
+ca_final_county <- ca_county_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  select(County, `Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+  
+ca_final_county_factors <- ca_final_county %>%
+  select(`Avg. Income_std`, `Num. Starbucks_std`, `Avg. Unemployment Rate_std`)
+
+set.seed(75)
+#Create a folder with 10 0s.
+fig <- matrix(NA, nrow=10, ncol=2)
+
+#Collecting information for each cluster 
+for (i in 1:10){
+  fig[i,1] <- i
+  fig[i,2] <- kmeans(ca_final_county_factors, centers = i, nstart = 20)$tot.withinss
+}
+
+#Visualizing "Elbow Plot"
+ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks=c(1:10)) +
+  labs(x = "K", y = expression("Total W"[k]))
+
+```
+
+
+#### Visualizing clusters
+
+```{r figure22, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+# apply the k-means algorithm (set the seed to make the results reproducible)
+set.seed(75)
+ca_county_km <- kmeans(ca_final_county_factors, centers = 4, nstart = 20)
+
+# add cluster assignments to the data frame
+ca_county_clust <- ca_final_county %>%
+  mutate(clust3_std = as.character(ca_county_km$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(County=tolower(County))
+
+usa_states <- map_data(map = "county"
+                       , region = "california") %>%
+  select(subregion, long, lat, group)
+
+ca_final_cluster <- ca_county_clust %>%
+  mutate(County=str_trim(County)) %>%
+  left_join(usa_states, by = c("County" = "subregion"))
+
+ggplot() +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_polygon(data=ca_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  scale_size_continuous(range=c(1,12)) +
+  scale_color_viridis(trans="log") +
+  labs(title = "Clusters in California",
+       caption = "*Grey states have no income or unemployment information") +
+  theme_void()
+
+
+
+```
+
+Cluster characteristics, explain why we chose cluster 1
+
+```{r figure23, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+
+ggpairs(data = ca_county_clust
+        , aes(color = clust3_std) 
+        , columns = vars_std
+        , upper = list(continuous = "blank"))
+
+ca_poor_county <- ca_county_clust %>%
+  filter(clust3_std==1) %>%
+  mutate(County=str_to_title(County)) %>%
+  inner_join(ca_county_factors, by="County") %>%
+  select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
+```
+
+
+# Final Recommendations
+
+Summarize overall process and thinking and impact of starbucks. Show the data table of all important counties from clusters we chose:
+
+
+```{r figure24, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+final_counties <- ca_poor_county %>%
+  bind_rows(nv_poor_county) %>%
+  bind_rows(vt_poor_county) %>%
+  bind_rows(va_poor_county) %>%
+  bind_rows(wi_poor_county) %>%
+  filter(`Num. Starbucks`==0)
+
+final_counties
+
+```
+
+
+# Limitations and Conclusion
+
+Paragraph here
+
+
+# Citations
+
+List of important packages/data sets

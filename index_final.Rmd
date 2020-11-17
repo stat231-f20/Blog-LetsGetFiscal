@@ -601,6 +601,7 @@ vt_cluster_matrix <- ggpairs(data = rename_vt_county_clust
 
 vt_cluster_matrix <- grid.grabExpr(print(vt_cluster_matrix))
 
+
 ggarrange(
   vt_geo,                # First row with line plot
   # Second row with box and dot plots

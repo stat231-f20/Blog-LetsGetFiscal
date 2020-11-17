@@ -78,8 +78,9 @@ In order to conduct this analysis, we collected the following data:
 
 Check the links in the bullets above for access to each of the data sources!
 
-
 # Distribution of Starbucks Across the US
+
+The first step of our analysis was to understand how Starbucks stores are distributed across the US:
 
 ```{r figure1, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -120,42 +121,36 @@ city_count_star <- us_map_star %>%
   left_join(city_star, by = "City") %>%
   mutate(Count = round(Count, 1))
 
+city_count_star$color <- cut(city_count_star$Count, c(0, 10, 50, 100, 300), 
+                             labels = c("0-10"
+                                        ,"10-50"
+                                        , "50-100"
+                                        , "100+"))
+
 
 ggplot() +
-  geom_polygon(data = us, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
-  scale_size_continuous(range=c(1,12)) +
-  scale_color_viridis(trans="log") +
+  geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="gray", alpha=0.3) +
+  geom_point(data=city_count_star, aes(x = Longitude, y = Latitude, group=group, size=color, color=color)) +
+  scale_size_discrete(range=c(1,7)) +
+  scale_color_viridis(discrete = TRUE) +
   theme_void() +
-  labs(color = "Amount of Starbucks in Each City") +
-  scale_size(guide = "none") +
-  theme(legend.title = element_text(color = "black", size = 8),
-        legend.text = element_text(color = "black", size = 8))
+  labs(color = "# of Starbucks",
+       size = "# of Starbucks",
+       title = "Starbucks Stores in the US by City",
+       subtitle = "As of February 2017")
 
 
 ```
 
-TEXT EXPLAINING INTRODUCTION VISUAL OF STARBUCKS LOCATIONS
-Text explaining map, transition from current clusters of starbucks to clusters of potential locations.
+Looking at the plot above, displaying the distribution and density of Starbuck locations across the US, we can see that Starbucks locations are extremely clustered along the coast of the US, and less prominent within states in the Rocky Mountain and Midwestern regions of the country. This is evidence that there is a correlation between income and Starbuck store location, as we see a concentration of stores in the richer parts of the country, such as several states in the Northeast and California. This is corroborated by the heavy concentration of Starbucks in the major cities within each state, as opposed to being spread out across the state’s counties. Looking at the map, one can easily identify major cities such as New York, Los Angeles, Houston, Miami and Boston as Starbucks hotspots. 
 
-General Process Towards Selecting New Location:
-1. Find States
-2. Find Counties
+With strong evidence of high spatial concentration of starbucks stores and a correlation between income and number of stores, we wanted to understand if that gave rise to any patterns regarding sentiment towards Starbucks. Specifically, we theorized that areas with more Starbucks stores or higher income should have a more positive sentiment towards the brand. In the following section, we test this hypothesis using text-based sentiment analysis of recent tweets that mention Starbucks.
 
-# Clustering by State
+# Cosumer Sentiments Towards Starbucks Across US
 
-Paragraph about how we went about determining clusters of states, and explaining why we want to use clusters and explaining factors we use
+After using the RTweets package to scrape text and locations for the latests 18,000 tweets mentioning Starbucks, we calculated the proportion of negative/positive words (as defined by NRC Lexicon) in each state. 
 
-## State-Level Factors
-
-- Consumer Sentiments
-- Average Income
-- Average Unemployment Rate
-- Number of Starbucks
-
-## Cosumer Sentiments Across US
-
-Before including the consumer sentiments in the clustering analysis, it was important to understand this information independently. Our initial hypothesis was that states with larger densities of starbucks would tweet more positive and less negative opinions. However, when observing the plots below, states with more Starbucks, such as California, Texas, Florida, and New York, all have a lower proportion of positive words in tweets and high proportion of negative words in tweets compared to other states in the US. Additionally, the states with a lower amount of Starbucks, such as Wisconsin, Iowa, Kansas, and Mississippi, had a higher proportion of positive words and lower proportion of negative words in tweets. This leads to the conclusion that it may be more beneficial for Starbucks to build its stores in states it is not currently heavily established in, according to consumer sentiment analysis.
+As mentioned previously, our initial hypothesis was that states with larger densities of starbucks would tweet more positive and less negative opinions. However, when observing the plots below, states with more Starbucks, such as California, Texas, Florida, and New York, all have a lower proportion of positive words in tweets and high proportion of negative words in tweets compared to other states in the US. Additionally, the states with a lower amount of Starbucks, such as Wisconsin, Iowa, Kansas, and Mississippi, had a higher proportion of positive words and lower proportion of negative words in tweets. This leads to the conclusion that it may be more beneficial for Starbucks to build its stores in states it is not currently heavily established in, according to consumer sentiment analysis.
 
 ```{r figure3, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -189,10 +184,23 @@ consumer_sentiment
 
 ```
 
+
+# Clustering by State
+
+Motivated by the potential that Starbucks might want to expand into areas it has not heavily invested in, we sought to understand how we could segment states into categories in order to determine how Starbucks might strategize differently in each of them.
+
+## State-Level Factors
+
+We thus employed a k-means clustering algorithm to US States, using the following variables in order to categorize them:
+
+- Average Proportion of Negative Sentiment in Tweets
+- Average Income
+- Average Unemployment Rate
+- Number of Starbucks
+
 ## State-Level Clusters
 
-Explain cluster analysis and elbow plot helped to determine 5 clusters were needed
-
+Using the elbow plot below, we found that 5 clusters would get us the most efficient information gain while keeping results interpretable.
 
 ```{r figure5, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -259,7 +267,7 @@ ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
 ```
 
 ### Visualization of Cluster
-So we chose 5 clusters based on this plot, and the 5 clusters are shown on this visualization:
+The results of the clustering algorithm are displayed in the visualization below:
 
 
 ```{r figure6, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -289,7 +297,7 @@ geom_polygon(data= final_cluster, aes(x = long, y = lat, group = group, fill = c
 ```
 
 ### Cluster Characteristics
-Explain we can see characteristics of each cluster through this matrix. Explain each cluster's unique properties
+The matrix below shows the distribution of each cluster among the four categories. Cluster 1, which is composed solely of California, is characterized by having the highest number of Starbucks stores by a large margin (a total of 2821!). It’s also interesting to note that California has high average income and a high unemployment rate, which is unique since there is an inverse correlation between the two in other states. Cluster 2 represents the states with lower income than most but also relatively low unemployment, being a special case of the less-wealthy states.  Cluster 3, composed solely of Vermont, is characterized by having the highest negative consumer sentiment. Cluster 4 represents the most wealthy states in the country, having high average income and a median unemployment rate. Finally, Cluster 5 represents the most impoverished states in the US, having a high unemployment rate, low average income and low number of Starbucks stores.
 
 ```{r figure7, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
@@ -306,8 +314,7 @@ ggpairs(data = final_cluster
 
 ## Final List of States
 
-Then, we calculated the center within each center, finding the states within each cluster that best represented each cluster by finding the state with the miminal distance between each characterstic's value and itself. From this analysis we concluded the final 5 states, each representative of their own cluster, are: 
-
+Having segmented states by their characteristics, we decided to pick one from each cluster in order to determine what a socially-minded strategy for Starbucks within that group of states might look like. To do so, we decided to pick the centermost state within each cluster, as the state “most representative” of that cluster. For California and Vermont, this was trivial, since they were the only states within their respective clusters. For the other three clusters, we calculated the distance from each state to its respective center and picked the states with the minimum distance. From this analysis, we concluded the final 5 states, each representative of their own cluster, are: 
 
 ```{r figure8, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 

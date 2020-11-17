@@ -400,7 +400,7 @@ va_cluster_analysis <- ggplot(data = as.data.frame(fig), aes(x = V1, y = V2)) +
   geom_point() + 
   geom_line() +
   scale_x_continuous(breaks=c(1:10)) +
-  labs(x = "K", y = expression("Total W"[k]))
+  labs(x = "K", y = expression("Total W"[k]), title="Cluster Analysis")
 
 ```
 
@@ -430,7 +430,7 @@ va_geo_plot <- ggplot() +
   geom_polygon(data=va_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
-  labs(title = "Clusters in Tennessee",
+  labs(title = "Clusters in Virginia",
        caption = "*Grey states have no income or unemployment information",
        fill="Clusters") +
   theme_void()
@@ -447,7 +447,8 @@ vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_st
 va_cluster_descr <- ggpairs(data = va_county_clust
         , aes(color = clust3_std) 
         , columns = vars_std
-        , upper = list(continuous = "blank"))
+        , upper = list(continuous = "blank") ) +
+  labs(title="Cluster Matrix")
 
 #Compile for the end result
 va_poor_county <- va_county_clust %>%
@@ -463,13 +464,12 @@ library(GGally)
 
 va_cluster_descr <- grid.grabExpr(print(va_cluster_descr))
 
-#Arranging all three in one plot
 ggarrange(
   va_geo_plot,                # First row with line plot
   # Second row with box and dot plots
-  ggarrange(va_cluster_descr, va_cluster_analysis, ncol = 2), 
-  nrow = 2    # Label of the line plot
- ) 
+  ggarrange(va_cluster_descr, va_cluster_analysis, ncol = 2),
+  nrow = 2     # Label of the line plot
+  )
 
 ```
 

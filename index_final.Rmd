@@ -108,7 +108,7 @@ us_map_star <- us_stars %>%
   left_join(state_info, by = "State") %>%
   left_join(usa_states, by = c("state_full" = "region"))
 
-us <- map_data(map = "state"
+usa_states <- map_data(map = "state"
                        , region = ".") 
 
 city_star <- us_map_star %>%

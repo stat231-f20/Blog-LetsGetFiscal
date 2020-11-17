@@ -15,7 +15,6 @@ library(viridis)
 library(GGally)
 library(plotly)
 library(dplyr)
-
 library(leaflet)
 library(gganimate)
 library(lubridate)
@@ -41,7 +40,25 @@ unemployment <- read_csv("Data/unemployment.csv")
 starbucks_positive <- read_csv("Data/starbucks_positive.csv")
 starbucks_negative <- read_csv("Data/starbucks_negative.csv")
 
-
+citation("tidyverse")
+citation("robotstxt")
+citation("rvest")
+citation("knitr")
+citation("janitor")
+citation("rtweet")
+citation("tidytext")
+citation("countrycode")
+citation("rworldmap")
+citation("viridis")
+citation("GGally")
+citation("plotly")
+citation("dplyr")
+citation("leaflet")
+citation("gganimate")
+citation("lubridate")
+citation("maps")
+citation("ggthemes")
+citation("stringr")
 
 ```
 
@@ -121,44 +138,44 @@ ggplot() +
   theme_void() 
 
 
-az_counties <- map_data(map = "county"
-                      , region = "arizona")
+co_counties <- map_data(map = "county"
+                      , region = "colorado")
 
-city_count_star_az <- us_map_star %>%
+city_count_star_co <- us_map_star %>%
   left_join(city_star, by = "City") %>%
-  filter(State == "AZ")
+  filter(State == "CO")
 
 ggplot() +
-  geom_polygon(data = az_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_point(data=city_count_star_az, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  geom_polygon(data = co_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star_co, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   theme_void() 
 
-me_counties <- map_data(map = "county"
-                      , region = "maine")
+ca_counties <- map_data(map = "county"
+                      , region = "california")
 
-city_count_star_me <- us_map_star %>%
+city_count_star_ca <- us_map_star %>%
   left_join(city_star, by = "City") %>%
-  filter(State == "ME")
+  filter(State == "CA")
 
 ggplot() +
-  geom_polygon(data = me_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_point(data=city_count_star_me, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  geom_polygon(data = ca_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star_ca, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   theme_void() 
 
-ms_counties <- map_data(map = "county"
-                      , region = "mississippi")
+tn_counties <- map_data(map = "county"
+                      , region = "tennessee")
 
-city_count_star_ms <- us_map_star %>%
+city_count_star_tn <- us_map_star %>%
   left_join(city_star, by = "City") %>%
-  filter(State == "MS")
+  filter(State == "TN")
 
 ggplot() +
-  geom_polygon(data = ms_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_point(data=city_count_star_ms, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
+  geom_polygon(data = tn_counties, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
+  geom_point(data=city_count_star_tn, aes(x = Longitude, y = Latitude, group=group, size=Count, color=Count)) +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   theme_void() 

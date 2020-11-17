@@ -29,6 +29,8 @@ library(lubridate)
 library(maps)
 library(ggthemes)
 library(RColorBrewer)
+library(DT)
+
 
 library(ggpubr)
 library(grid)
@@ -200,6 +202,8 @@ We thus employed a k-means clustering algorithm to US States, using the followin
 - Average Unemployment Rate per State
 - Number of Starbucks per State
 
+It is important to note that these factors have significantly different scales. Thus, we incorporated standardized values into our cluster analysis so that the clustering algorithm weights all variables equally. 
+
 ## State-Level Clusters
 
 The total within-cluster sum of squares (tot.withinss) is the metric that can be used to judge the number of clusters, or K, required. So we can repeat the analysis with different cluster values and keep noting the tot.withinss values to assess which number of clusters is best. This information is displayed through the "Elbow Plot". From the cluster analysis below, it seems that 5 clusters result in the most sufficient marginal information gain.
@@ -340,11 +344,11 @@ clust_1 <- clust_1 %>%
 
 ```
 
-- Virginia
-- Vermont
-- Tennessee
-- Iowa
-- California
+- California - Cluster 1
+- Iowa - Cluster 2
+- Vermont - Cluster 3
+- Virginia - Cluster 4
+- Tennessee - Cluster 5
 
 # Clustering by County
 
@@ -1022,17 +1026,50 @@ After selecting the specific counties of the desired clusters from each state, w
 
 ```{r figure24, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-final_counties <- ca_poor_county %>%
-  bind_rows(ia_poor_county) %>%
-  bind_rows(vt_poor_county) %>%
-  bind_rows(va_poor_county) %>%
-  bind_rows(tn_poor_county) 
+final_ia_poor_county <- ia_poor_county %>%
+  mutate(State="Iowa") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
 
-library(knitr)
-library(kableExtra)
 
-kable(final_counties) %>%
-  kable_styling(latex_options = "striped")
+final_ca_poor_county <- ca_poor_county %>%
+  mutate(State="California") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_va_poor_county <- va_poor_county %>%
+  mutate(State="Virginia") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_vt_poor_county <- vt_poor_county %>%
+  mutate(State="Vermont") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_tn_poor_county <- tn_poor_county %>%
+  mutate(State="Tennessee") %>%
+  rename(`Unemployment Rate`=`Avg. Unemployment Rate`) %>%
+  mutate(`Unemployment Rate`=round(`Unemployment Rate`, 2)/100) %>%
+  mutate(`Avg. Income`=round(`Avg. Income`, 2))
+
+final_counties <- final_ca_poor_county %>%
+  bind_rows(final_ia_poor_county) %>%
+  bind_rows(final_vt_poor_county) %>%
+  bind_rows(final_va_poor_county) %>%
+  bind_rows(final_tn_poor_county) 
+
+options(DT.options = list(pageLength = 10))
+datatable(final_counties) %>% 
+  formatStyle(
+  'Num. Starbucks',
+  backgroundColor = styleEqual(c(0), c('yellow'))) %>%
+  formatPercentage(c("Unemployment Rate"), 1) %>%
+  formatCurrency(c('Avg. Income'), "$") 
 
 
 ```

@@ -360,6 +360,7 @@ Step-by Step Process
 
 ## Determining Amount of Clusters for Each State {.tabset .tabset-fade .tabset-pills}
 
+
 ### Virginia
 
 ```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
@@ -474,11 +475,11 @@ va_cluster_matrix <- ggpairs(data = rename_va_county_clust
 
 va_cluster_matrix <- grid.grabExpr(print(va_cluster_matrix))
 
+va_geo
 ggarrange(
-  va_geo,                # First row with line plot
   # Second row with box and dot plots
   ggarrange(va_cluster_matrix, va_cluster_analysis, ncol = 2),
-  nrow = 2     # Label of the line plot
+  nrow = 1     # Label of the line plot
   )
 
 #Compile for the end result
@@ -609,11 +610,11 @@ vt_cluster_matrix <- ggpairs(data = rename_vt_county_clust
 vt_cluster_matrix <- grid.grabExpr(print(vt_cluster_matrix))
 
 
+vt_geo
 ggarrange(
-  vt_geo,                # First row with line plot
   # Second row with box and dot plots
   ggarrange(vt_cluster_matrix, vt_cluster_analysis, ncol = 2),
-  nrow = 2     # Label of the line plot
+  nrow = 1     # Label of the line plot
   )
 
 vt_poor_county <- vt_county_clust %>%
@@ -725,7 +726,7 @@ tn_geo <- ggplot() +
 
 Cluster characteristics, explain why we chose cluster 4
 
-```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
+```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE, width=20, height=20}
 
 
 rename_tn_county_clust <- tn_county_clust %>%
@@ -742,11 +743,11 @@ tn_cluster_matrix <- ggpairs(data = rename_tn_county_clust
 
 tn_cluster_matrix <- grid.grabExpr(print(tn_cluster_matrix))
 
+tn_geo
 ggarrange(
-  tn_geo,                # First row with line plot
   # Second row with box and dot plots
   ggarrange(tn_cluster_matrix, tn_cluster_analysis, ncol = 2),
-  nrow = 2     # Label of the line plot
+  nrow = 1     # Label of the line plot
   )
 
 tn_poor_county <- tn_county_clust %>%
@@ -874,11 +875,11 @@ ia_cluster_matrix <- ggpairs(data = rename_ia_county_clust
 
 ia_cluster_matrix <- grid.grabExpr(print(ia_cluster_matrix))
 
+ia_geo
 ggarrange(
-  ia_geo,                # First row with line plot
   # Second row with box and dot plots
   ggarrange(ia_cluster_matrix, ia_cluster_analysis, ncol = 2),
-  nrow = 2     # Label of the line plot
+  nrow = 1     # Label of the line plot
   )
 
 #Cluster 3
@@ -995,8 +996,6 @@ Cluster characteristics, explain why we chose cluster 1
 
 ```{r figure23, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-
-
 rename_ca_county_clust <- ca_county_clust %>%
   rename(`Income`=`Avg. Income_std`) %>%
   rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
@@ -1011,11 +1010,11 @@ ca_cluster_matrix <- ggpairs(data = rename_ca_county_clust
 
 ca_cluster_matrix <- grid.grabExpr(print(ca_cluster_matrix))
 
+ca_geo
 ggarrange(
-  ca_geo,                # First row with line plot
   # Second row with box and dot plots
   ggarrange(ca_cluster_matrix, ca_cluster_analysis, ncol = 2),
-  nrow = 2     # Label of the line plot
+  nrow = 1     # Label of the line plot
   )
 
 ca_poor_county <- ca_county_clust %>%

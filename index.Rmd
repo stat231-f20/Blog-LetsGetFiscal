@@ -1107,7 +1107,17 @@ final_counties <- ca_poor_county %>%
   bind_rows(wi_poor_county) %>%
   filter(`Num. Starbucks`==0)
 
-final_counties
+
+library(knitr)
+library(kableExtra)
+
+kable(final_counties) %>%
+  kable_styling(latex_options = "striped")
+
+
+kable(final_counties, booktabs = TRUE) %>%
+  kable_styling(font_size = 8)
+
 
 ```
 

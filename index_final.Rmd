@@ -314,10 +314,10 @@ Then, we calculated the center within each center, finding the states within eac
 #Code we used for each cluster to determine its' most representative state
 clust_1 <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
-  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(km_out_std$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(State_Name=tolower(State_Name)) %>%
-  filter(clust3_std==1) 
+  filter(Cluster==1) 
 
 clust_1 <- clust_1 %>%
   mutate(dist = sqrt(
@@ -355,7 +355,6 @@ Step-by Step Process
 
 ### Virginia
 
-Cluster Analysis
 ```{r figure9, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 va_income_city <- city_income %>%
@@ -426,8 +425,8 @@ va_county_km <- kmeans(va_final_county_factors, centers = 5, nstart = 20)
 
 # add cluster assignments to the data frame
 va_county_clust <- va_final_county %>%
-  mutate(clust3_std = as.character(va_county_km$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(va_county_km$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
@@ -440,25 +439,29 @@ va_final_cluster <- va_county_clust %>%
 
 va_geo <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=va_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  geom_polygon(data=va_final_cluster, aes(x = long, y = lat, group=group, fill=Cluster), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
-  labs(title = "Clusters in Tennessee",
+  labs(title = "Clusters in Virginia",
        caption = "*Grey states have no income or unemployment information",
        fill="Clusters") +
   theme_void()
 
 ```
 
-
-Cluster characteristics, explain why we chose cluster 4
-
 ```{r figure11, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+rename_va_county_clust <- va_county_clust %>%
+  rename(`Income`=`Avg. Income_std`) %>%
+  rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
+  rename(`Unemployment`=`Avg. Unemployment Rate_std`) 
+  
+vars_std = c("Income", "Num. Starbucks", "Unemployment")
 
-va_cluster_matrix <- ggpairs(data = va_county_clust
-        , aes(color = clust3_std) 
+va_geo <- ggplotGrob(va_geo)
+
+va_cluster_matrix <- ggpairs(data = rename_va_county_clust
+        , aes(color = Cluster) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
 
@@ -473,12 +476,14 @@ ggarrange(
 
 #Compile for the end result
 va_poor_county <- va_county_clust %>%
-  filter(clust3_std==4) %>%
+  filter(Cluster==4) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(va_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
 
 ```
+
+Cluster characteristics, explain why we chose cluster 4
 
 
 ### Vermont
@@ -554,8 +559,8 @@ vt_county_km <- kmeans(vt_final_county_factors, centers = 4, nstart = 20)
 
 # add cluster assignments to the data frame
 vt_county_clust <- vt_final_county %>%
-  mutate(clust3_std = as.character(vt_county_km$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(vt_county_km$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
@@ -568,10 +573,10 @@ vt_final_cluster <- vt_county_clust %>%
 
 vt_geo <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=vt_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  geom_polygon(data=vt_final_cluster, aes(x = long, y = lat, group=group, fill=Cluster), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
-  labs(title = "Clusters in Tennessee",
+  labs(title = "Clusters in Vermont",
        caption = "*Grey states have no income or unemployment information",
        fill="Clusters") +
   theme_void()
@@ -582,10 +587,15 @@ Cluster characteristics, explain why we chose cluster 1
 
 ```{r figure14, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+rename_vt_county_clust <- vt_county_clust %>%
+  rename(`Income`=`Avg. Income_std`) %>%
+  rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
+  rename(`Unemployment`=`Avg. Unemployment Rate_std`) 
+  
+vars_std = c("Income", "Num. Starbucks", "Unemployment")
 
-vt_cluster_matrix <- ggpairs(data = vt_county_clust
-        , aes(color = clust3_std) 
+vt_cluster_matrix <- ggpairs(data = rename_vt_county_clust
+        , aes(color = Cluster) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
 
@@ -599,7 +609,7 @@ ggarrange(
   )
 
 vt_poor_county <- vt_county_clust %>%
-  filter(clust3_std==1) %>%
+  filter(Cluster==1) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(vt_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -682,8 +692,8 @@ tn_county_km <- kmeans(tn_final_county_factors, centers = 4, nstart = 20)
 
 # add cluster assignments to the data frame
 tn_county_clust <- tn_final_county %>%
-  mutate(clust3_std = as.character(tn_county_km$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(tn_county_km$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
@@ -696,7 +706,7 @@ tn_final_cluster <- tn_county_clust %>%
 
 tn_geo <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=tn_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  geom_polygon(data=tn_final_cluster, aes(x = long, y = lat, group=group, fill=Cluster), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Tennessee",
@@ -710,10 +720,15 @@ Cluster characteristics, explain why we chose cluster 4
 ```{r figure17, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
 
-vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+rename_tn_county_clust <- tn_county_clust %>%
+  rename(`Income`=`Avg. Income_std`) %>%
+  rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
+  rename(`Unemployment`=`Avg. Unemployment Rate_std`) 
+  
+vars_std = c("Income", "Num. Starbucks", "Unemployment")
 
-tn_cluster_matrix <- ggpairs(data = tn_county_clust
-        , aes(color = clust3_std) 
+tn_cluster_matrix <- ggpairs(data = rename_tn_county_clust
+        , aes(color = Cluster) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
 
@@ -727,7 +742,7 @@ ggarrange(
   )
 
 tn_poor_county <- tn_county_clust %>%
-  filter(clust3_std==2) %>%
+  filter(Cluster==2) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(tn_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -809,8 +824,8 @@ ia_county_km <- kmeans(ia_final_county_factors, centers = 4, nstart = 20)
 
 # add cluster assignments to the data frame
 ia_county_clust <- ia_final_county %>%
-  mutate(clust3_std = as.character(ia_county_km$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(ia_county_km$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
@@ -823,7 +838,7 @@ ia_final_cluster <- ia_county_clust %>%
 
 ia_geo <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=ia_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  geom_polygon(data=ia_final_cluster, aes(x = long, y = lat, group=group, fill=Cluster), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in Iowa",
@@ -837,10 +852,15 @@ Cluster characteristics, explain why we chose cluster 5
 
 ```{r figure20, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
+rename_ia_county_clust <- ia_county_clust %>%
+  rename(`Income`=`Avg. Income_std`) %>%
+  rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
+  rename(`Unemployment`=`Avg. Unemployment Rate_std`) 
+  
+vars_std = c("Income", "Num. Starbucks", "Unemployment")
 
-ia_cluster_matrix <- ggpairs(data = ia_county_clust
-        , aes(color = clust3_std) 
+ia_cluster_matrix <- ggpairs(data = rename_ia_county_clust
+        , aes(color = Cluster) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
 
@@ -855,7 +875,7 @@ ggarrange(
 
 #Cluster 3
 ia_poor_county <- ia_county_clust %>%
-  filter(clust3_std==3) %>%
+  filter(Cluster==3) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(ia_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -938,8 +958,8 @@ ca_county_km <- kmeans(ca_final_county_factors, centers = 4, nstart = 20)
 
 # add cluster assignments to the data frame
 ca_county_clust <- ca_final_county %>%
-  mutate(clust3_std = as.character(ca_county_km$cluster)) %>%
-  arrange(clust3_std) %>%
+  mutate(Cluster = as.character(ca_county_km$cluster)) %>%
+  arrange(Cluster) %>%
   mutate(County=tolower(County))
 
 usa_states <- map_data(map = "county"
@@ -952,7 +972,7 @@ ca_final_cluster <- ca_county_clust %>%
 
 ca_geo <- ggplot() +
   geom_polygon(data = usa_states, aes(x=long, y = lat, group = group), color="black", fill="black", alpha=0.3) +
-  geom_polygon(data=ca_final_cluster, aes(x = long, y = lat, group=group, fill=clust3_std), color="black") +
+  geom_polygon(data=ca_final_cluster, aes(x = long, y = lat, group=group, fill=Cluster), color="black") +
   scale_size_continuous(range=c(1,12)) +
   scale_color_viridis(trans="log") +
   labs(title = "Clusters in California",
@@ -967,10 +987,17 @@ Cluster characteristics, explain why we chose cluster 1
 
 ```{r figure23, echo = FALSE, error=FALSE, warning=FALSE, message=FALSE}
 
-vars_std = c("Avg. Income_std", "Num. Starbucks_std", "Avg. Unemployment Rate_std")
 
-ca_cluster_matrix <- ggpairs(data = ca_county_clust
-        , aes(color = clust3_std) 
+
+rename_ca_county_clust <- ca_county_clust %>%
+  rename(`Income`=`Avg. Income_std`) %>%
+  rename(`Num. Starbucks`=`Num. Starbucks_std`) %>%
+  rename(`Unemployment`=`Avg. Unemployment Rate_std`) 
+  
+vars_std = c("Income", "Num. Starbucks", "Unemployment")
+
+ca_cluster_matrix <- ggpairs(data = rename_ca_county_clust
+        , aes(color = Cluster) 
         , columns = vars_std
         , upper = list(continuous = "blank"))
 
@@ -984,7 +1011,7 @@ ggarrange(
   )
 
 ca_poor_county <- ca_county_clust %>%
-  filter(clust3_std==1) %>%
+  filter(Cluster==1) %>%
   mutate(County=str_to_title(County)) %>%
   inner_join(ca_county_factors, by="County") %>%
   select(County, `Avg. Income`, `Num. Starbucks`,`Avg. Unemployment Rate`)
@@ -1010,12 +1037,6 @@ library(kableExtra)
 kable(final_counties) %>%
   kable_styling(latex_options = "striped")
 
-##ADD DIVISION FOR EACH STATE
-
-kable(final_counties, booktabs = TRUE) %>%
-  kable_styling(font_size = 8)
-
-final_counties
 
 ```
 

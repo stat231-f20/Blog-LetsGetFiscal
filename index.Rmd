@@ -329,17 +329,81 @@ Having segmented states by their characteristics, we decided to pick one from ea
 #Code we used for each cluster to determine its' most representative state
 clust_1 <- final_state_factors %>%
   mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
-  mutate(Cluster = as.character(km_out_std$cluster)) %>%
-  arrange(Cluster) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
   mutate(State_Name=tolower(State_Name)) %>%
-  filter(Cluster==1) 
+  filter(clust3_std==1) 
 
 clust_1 <- clust_1 %>%
   mutate(dist = sqrt(
                       (`Avg. Unemployment Rate_std` - km_out_std$centers[1,1])^2 +
                       (`Avg. Income_std` - km_out_std$centers[1,2])^2 +
                       (`negative.proportion_std` - km_out_std$centers[1,3])^2 +
-                      (`Num. Starbucks_std` - km_out_std$centers[1,3])^2)
+                      (`Num. Starbucks_std` - km_out_std$centers[1,4])^2)
+  ) %>%
+  arrange(dist)
+
+clust_2 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==2) 
+
+clust_2 <- clust_2 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[2,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[2,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[2,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[2,4])^2)
+  ) %>%
+  arrange(dist)
+
+clust_3 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==3) 
+
+clust_3 <- clust_3 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[3,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[3,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[3,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[3,4])^2)
+  ) %>%
+  arrange(dist)
+
+clust_4 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==4) 
+
+clust_4 <- clust_4 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[4,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[4,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[4,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[4,4])^2)
+  ) %>%
+  arrange(dist)
+
+clust_5 <- final_state_factors %>%
+  mutate_if(is.numeric, funs(`std`=scale(.) %>% as.vector())) %>%
+  mutate(clust3_std = as.character(km_out_std$cluster)) %>%
+  arrange(clust3_std) %>%
+  mutate(State_Name=tolower(State_Name)) %>%
+  filter(clust3_std==5) 
+
+clust_5 <- clust_5 %>%
+  mutate(dist = sqrt(
+                      (`Avg. Unemployment Rate_std` - km_out_std$centers[5,1])^2 +
+                      (`Avg. Income_std` - km_out_std$centers[5,2])^2 +
+                      (`negative.proportion_std` - km_out_std$centers[5,3])^2 +
+                      (`Num. Starbucks_std` - km_out_std$centers[5,4])^2)
   ) %>%
   arrange(dist)
 
